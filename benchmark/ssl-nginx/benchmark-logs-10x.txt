@@ -1,0 +1,2591 @@
+
+=== Running benchmark for 16b file ===
+Generating test file of size 16b...
+  Created benchmark/ssl-nginx/index.html (16 bytes)
+[DEBUG 07:22:23] Starting benchmark script
+[DEBUG 07:22:23] Current working directory: /home/ubuntu/bpftime
+[DEBUG 07:22:23] Checking command: nginx - EXISTS
+[DEBUG 07:22:23]   Path: /usr/sbin/nginx
+[DEBUG 07:22:23] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 07:22:23] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+[DEBUG 07:22:23] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:22:23] Checking command: wrk - EXISTS
+[DEBUG 07:22:23]   Path: /usr/bin/wrk
+
+=== Running Baseline Tests ===
+[DEBUG 07:22:23] Cleaning up processes...
+[DEBUG 07:22:25] Found nginx PIDs: []
+[DEBUG 07:22:25] Found sslsniff PIDs: []
+[DEBUG 07:22:28] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:22:28] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:22:28] Access log removed successfully
+[DEBUG 07:22:28] Checking command: nginx - EXISTS
+[DEBUG 07:22:28]   Path: /usr/sbin/nginx
+[DEBUG 07:22:28] Current directory: /home/ubuntu/bpftime
+[DEBUG 07:22:28] Checking if nginx.conf exists: True
+[DEBUG 07:22:28] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:22:30] nginx started successfully
+[DEBUG 07:22:30] HTTP status code from nginx: 200
+Run 1/10...
+[DEBUG 07:22:30] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:22:40] wrk exit code: 0
+[DEBUG 07:22:40] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 439.97
+Run 2/10...
+[DEBUG 07:22:40] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:22:51] wrk exit code: 0
+[DEBUG 07:22:51] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 404.39
+Run 3/10...
+[DEBUG 07:22:51] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:23:01] wrk exit code: 0
+[DEBUG 07:23:01] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 383.41
+Run 4/10...
+[DEBUG 07:23:01] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:23:11] wrk exit code: 0
+[DEBUG 07:23:11] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 387.29
+Run 5/10...
+[DEBUG 07:23:11] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:23:22] wrk exit code: 0
+[DEBUG 07:23:22] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 412.53
+Run 6/10...
+[DEBUG 07:23:22] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:23:32] wrk exit code: 0
+[DEBUG 07:23:32] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 371.60
+Run 7/10...
+[DEBUG 07:23:32] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:23:42] wrk exit code: 0
+[DEBUG 07:23:42] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 391.54
+Run 8/10...
+[DEBUG 07:23:42] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:23:53] wrk exit code: 0
+[DEBUG 07:23:53] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 398.14
+Run 9/10...
+[DEBUG 07:23:53] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:24:03] wrk exit code: 0
+[DEBUG 07:24:03] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 398.53
+Run 10/10...
+[DEBUG 07:24:03] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:24:13] wrk exit code: 0
+[DEBUG 07:24:13] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 295.47
+[DEBUG 07:24:13] Terminating nginx
+
+=== Running Kernel sslsniff Tests ===
+[DEBUG 07:24:13] Cleaning up processes...
+[DEBUG 07:24:15] Found nginx PIDs: []
+[DEBUG 07:24:15] Found sslsniff PIDs: []
+[DEBUG 07:24:18] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:24:18] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:24:18] Access log removed successfully
+[DEBUG 07:24:18] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:24:18] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+Run 1/10...
+[DEBUG 07:24:20] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:24:22] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:24:32] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:24:32] Killing sslsniff
+  Requests/sec: 235.78
+Run 2/10...
+[DEBUG 07:24:34] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:24:36] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:24:46] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:24:46] Killing sslsniff
+  Requests/sec: 231.85
+Run 3/10...
+[DEBUG 07:24:48] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:24:50] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:25:01] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:25:01] Killing sslsniff
+  Requests/sec: 237.34
+Run 4/10...
+[DEBUG 07:25:03] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:25:05] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:25:15] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:25:15] Killing sslsniff
+  Requests/sec: 219.56
+Run 5/10...
+[DEBUG 07:25:17] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:25:19] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:25:30] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:25:30] Killing sslsniff
+  Requests/sec: 233.84
+Run 6/10...
+[DEBUG 07:25:32] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:25:34] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:25:44] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:25:44] Killing sslsniff
+  Requests/sec: 240.62
+Run 7/10...
+[DEBUG 07:25:46] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:25:48] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:25:58] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:25:58] Killing sslsniff
+  Requests/sec: 239.54
+Run 8/10...
+[DEBUG 07:26:01] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:26:03] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:26:13] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:26:13] Killing sslsniff
+  Requests/sec: 225.65
+Run 9/10...
+[DEBUG 07:26:15] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:26:17] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:26:27] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:26:27] Killing sslsniff
+  Requests/sec: 231.50
+Run 10/10...
+[DEBUG 07:26:29] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:26:32] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:26:42] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:26:42] Killing sslsniff
+  Requests/sec: 245.09
+[DEBUG 07:26:44] Terminating nginx
+
+=== Running bpftime sslsniff Tests ===
+[DEBUG 07:26:44] Cleaning up processes...
+[DEBUG 07:26:45] Found nginx PIDs: []
+[DEBUG 07:26:45] Found sslsniff PIDs: []
+[DEBUG 07:26:48] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:26:48] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:26:48] Access log removed successfully
+[DEBUG 07:26:48] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:26:48] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 07:26:48] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+Run 1/10...
+[DEBUG 07:26:48] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:26:50] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:26:52] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:27:02] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 237.63
+[DEBUG 07:27:02] Terminating processes
+[DEBUG 07:27:03] Cleaning up processes...
+[DEBUG 07:27:04] Found nginx PIDs: []
+[DEBUG 07:27:04] Found sslsniff PIDs: []
+[DEBUG 07:27:07] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 2/10...
+[DEBUG 07:27:07] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:27:09] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:27:11] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:27:11] Parsing wrk output: ...
+[DEBUG 07:27:11] Failed to parse wrk output
+[DEBUG 07:27:11] Failed to parse output: 
+[DEBUG 07:27:11] Terminating processes
+[DEBUG 07:27:11] Cleaning up processes...
+[DEBUG 07:27:13] Found nginx PIDs: []
+[DEBUG 07:27:13] Found sslsniff PIDs: []
+[DEBUG 07:27:15] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 3/10...
+[DEBUG 07:27:15] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:27:17] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:27:19] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:27:30] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 192.35
+[DEBUG 07:27:30] Terminating processes
+[DEBUG 07:27:30] Cleaning up processes...
+[DEBUG 07:27:32] Found nginx PIDs: []
+[DEBUG 07:27:32] Found sslsniff PIDs: []
+[DEBUG 07:27:35] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 4/10...
+[DEBUG 07:27:35] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:27:37] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:27:39] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:27:39] Parsing wrk output: ...
+[DEBUG 07:27:39] Failed to parse wrk output
+[DEBUG 07:27:39] Failed to parse output: 
+[DEBUG 07:27:39] Terminating processes
+[DEBUG 07:27:39] Cleaning up processes...
+[DEBUG 07:27:41] Found nginx PIDs: []
+[DEBUG 07:27:41] Found sslsniff PIDs: []
+[DEBUG 07:27:44] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 5/10...
+[DEBUG 07:27:44] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:27:46] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:27:48] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:27:48] Parsing wrk output: ...
+[DEBUG 07:27:48] Failed to parse wrk output
+[DEBUG 07:27:48] Failed to parse output: 
+[DEBUG 07:27:48] Terminating processes
+[DEBUG 07:27:48] Cleaning up processes...
+[DEBUG 07:27:50] Found nginx PIDs: []
+[DEBUG 07:27:50] Found sslsniff PIDs: []
+[DEBUG 07:27:52] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 6/10...
+[DEBUG 07:27:52] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:27:54] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:27:56] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:27:56] Parsing wrk output: ...
+[DEBUG 07:27:56] Failed to parse wrk output
+[DEBUG 07:27:56] Failed to parse output: 
+[DEBUG 07:27:56] Terminating processes
+[DEBUG 07:27:56] Cleaning up processes...
+[DEBUG 07:27:58] Found nginx PIDs: []
+[DEBUG 07:27:58] Found sslsniff PIDs: []
+[DEBUG 07:28:01] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 7/10...
+[DEBUG 07:28:01] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:28:03] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:28:05] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:28:15] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 252.27
+[DEBUG 07:28:15] Terminating processes
+[DEBUG 07:28:15] Cleaning up processes...
+[DEBUG 07:28:17] Found nginx PIDs: []
+[DEBUG 07:28:17] Found sslsniff PIDs: []
+[DEBUG 07:28:19] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 8/10...
+[DEBUG 07:28:19] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:28:21] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:28:23] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:28:34] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 242.57
+[DEBUG 07:28:34] Terminating processes
+[DEBUG 07:28:34] Cleaning up processes...
+[DEBUG 07:28:36] Found nginx PIDs: []
+[DEBUG 07:28:36] Found sslsniff PIDs: []
+[DEBUG 07:28:38] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 9/10...
+[DEBUG 07:28:38] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:28:40] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:28:42] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:28:52] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 224.76
+[DEBUG 07:28:52] Terminating processes
+[DEBUG 07:28:53] Cleaning up processes...
+[DEBUG 07:28:54] Found nginx PIDs: []
+[DEBUG 07:28:54] Found sslsniff PIDs: []
+[DEBUG 07:28:57] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 10/10...
+[DEBUG 07:28:57] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:28:59] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:29:01] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:29:11] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 239.38
+[DEBUG 07:29:11] Terminating processes
+[DEBUG 07:29:11] Cleaning up processes...
+[DEBUG 07:29:13] Found nginx PIDs: []
+[DEBUG 07:29:13] Found sslsniff PIDs: []
+[DEBUG 07:29:15] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+=== Benchmark Results ===
+Each configuration run 10 times
+
+Baseline:
+  Requests/sec (mean):   388.29
+  Requests/sec (median): 394.84
+  Standard deviation:    37.49
+  Min:                   295.47
+  Max:                   439.97
+  All runs:              [439.97, 404.39, 383.41, 387.29, 412.53, 371.6, 391.54, 398.14, 398.53, 295.47]
+
+Kernel Sslsniff:
+  Requests/sec (mean):   234.08
+  Requests/sec (median): 234.81
+  Standard deviation:    7.46
+  Min:                   219.56
+  Max:                   245.09
+  All runs:              [235.78, 231.85, 237.34, 219.56, 233.84, 240.62, 239.54, 225.65, 231.5, 245.09]
+
+Bpftime Sslsniff:
+  Requests/sec (mean):   231.49
+  Requests/sec (median): 238.50
+  Standard deviation:    21.13
+  Min:                   192.35
+  Max:                   252.27
+  All runs:              [237.63, 192.35, 252.27, 242.57, 224.76, 239.38]
+
+Kernel sslsniff performance impact: 39.72% decrease
+bpftime sslsniff performance impact: 40.38% decrease
+bpftime improvement over kernel: -1.10%
+
+Results saved to benchmark/ssl-nginx/benchmark_results_20260616_072915.json
+[DEBUG 07:29:15] Cleaning up before exit
+[DEBUG 07:29:15] Cleaning up processes...
+[DEBUG 07:29:17] Found nginx PIDs: []
+[DEBUG 07:29:17] Found sslsniff PIDs: []
+[DEBUG 07:29:19] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+
+=== Running benchmark for 1kb file ===
+Generating test file of size 1kb...
+  Created benchmark/ssl-nginx/index.html (1024 bytes)
+[DEBUG 07:29:23] Starting benchmark script
+[DEBUG 07:29:23] Current working directory: /home/ubuntu/bpftime
+[DEBUG 07:29:23] Checking command: nginx - EXISTS
+[DEBUG 07:29:23]   Path: /usr/sbin/nginx
+[DEBUG 07:29:23] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 07:29:23] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+[DEBUG 07:29:23] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:29:23] Checking command: wrk - EXISTS
+[DEBUG 07:29:23]   Path: /usr/bin/wrk
+
+=== Running Baseline Tests ===
+[DEBUG 07:29:23] Cleaning up processes...
+[DEBUG 07:29:25] Found nginx PIDs: []
+[DEBUG 07:29:25] Found sslsniff PIDs: []
+[DEBUG 07:29:27] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:29:27] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:29:27] Access log removed successfully
+[DEBUG 07:29:27] Checking command: nginx - EXISTS
+[DEBUG 07:29:27]   Path: /usr/sbin/nginx
+[DEBUG 07:29:27] Current directory: /home/ubuntu/bpftime
+[DEBUG 07:29:27] Checking if nginx.conf exists: True
+[DEBUG 07:29:27] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:29:29] nginx started successfully
+[DEBUG 07:29:30] HTTP status code from nginx: 200
+Run 1/10...
+[DEBUG 07:29:30] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:29:40] wrk exit code: 0
+[DEBUG 07:29:40] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 396.65
+Run 2/10...
+[DEBUG 07:29:40] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:29:50] wrk exit code: 0
+[DEBUG 07:29:50] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 375.57
+Run 3/10...
+[DEBUG 07:29:50] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:30:00] wrk exit code: 0
+[DEBUG 07:30:00] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 384.46
+Run 4/10...
+[DEBUG 07:30:00] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:30:11] wrk exit code: 0
+[DEBUG 07:30:11] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 375.46
+Run 5/10...
+[DEBUG 07:30:11] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:30:21] wrk exit code: 0
+[DEBUG 07:30:21] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 384.36
+Run 6/10...
+[DEBUG 07:30:21] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:30:31] wrk exit code: 0
+[DEBUG 07:30:31] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 394.74
+Run 7/10...
+[DEBUG 07:30:31] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:30:42] wrk exit code: 0
+[DEBUG 07:30:42] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 401.19
+Run 8/10...
+[DEBUG 07:30:42] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:30:52] wrk exit code: 0
+[DEBUG 07:30:52] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 384.77
+Run 9/10...
+[DEBUG 07:30:52] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:31:02] wrk exit code: 0
+[DEBUG 07:31:02] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 406.08
+Run 10/10...
+[DEBUG 07:31:02] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:31:12] wrk exit code: 0
+[DEBUG 07:31:12] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 394.67
+[DEBUG 07:31:12] Terminating nginx
+
+=== Running Kernel sslsniff Tests ===
+[DEBUG 07:31:13] Cleaning up processes...
+[DEBUG 07:31:14] Found nginx PIDs: []
+[DEBUG 07:31:14] Found sslsniff PIDs: []
+[DEBUG 07:31:17] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:31:17] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:31:17] Access log removed successfully
+[DEBUG 07:31:17] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:31:17] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+Run 1/10...
+[DEBUG 07:31:19] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:31:21] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:31:31] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:31:31] Killing sslsniff
+  Requests/sec: 231.48
+Run 2/10...
+[DEBUG 07:31:33] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:31:35] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:31:46] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:31:46] Killing sslsniff
+  Requests/sec: 226.82
+Run 3/10...
+[DEBUG 07:31:48] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:31:50] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:32:00] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:32:00] Killing sslsniff
+  Requests/sec: 344.09
+Run 4/10...
+[DEBUG 07:32:03] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:32:05] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:32:15] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:32:15] Killing sslsniff
+  Requests/sec: 343.16
+Run 5/10...
+[DEBUG 07:32:17] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:32:19] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:32:29] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:32:29] Killing sslsniff
+  Requests/sec: 345.46
+Run 6/10...
+[DEBUG 07:32:31] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:32:33] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:32:44] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:32:44] Killing sslsniff
+  Requests/sec: 378.52
+Run 7/10...
+[DEBUG 07:32:46] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:32:48] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:32:58] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:32:58] Killing sslsniff
+  Requests/sec: 383.72
+Run 8/10...
+[DEBUG 07:33:00] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:33:02] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:33:13] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:33:13] Killing sslsniff
+  Requests/sec: 373.74
+Run 9/10...
+[DEBUG 07:33:15] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:33:17] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:33:27] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:33:27] Killing sslsniff
+  Requests/sec: 376.70
+Run 10/10...
+[DEBUG 07:33:29] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:33:31] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:33:42] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:33:42] Killing sslsniff
+  Requests/sec: 223.42
+[DEBUG 07:33:44] Terminating nginx
+
+=== Running bpftime sslsniff Tests ===
+[DEBUG 07:33:44] Cleaning up processes...
+[DEBUG 07:33:46] Found nginx PIDs: []
+[DEBUG 07:33:46] Found sslsniff PIDs: []
+[DEBUG 07:33:49] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:33:49] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:33:49] Access log removed successfully
+[DEBUG 07:33:49] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:33:49] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 07:33:49] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+Run 1/10...
+[DEBUG 07:33:49] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:33:51] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:33:53] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:33:53] Parsing wrk output: ...
+[DEBUG 07:33:53] Failed to parse wrk output
+[DEBUG 07:33:53] Failed to parse output: 
+[DEBUG 07:33:53] Terminating processes
+[DEBUG 07:33:53] Cleaning up processes...
+[DEBUG 07:33:55] Found nginx PIDs: []
+[DEBUG 07:33:55] Found sslsniff PIDs: []
+[DEBUG 07:33:57] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 2/10...
+[DEBUG 07:33:57] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:33:59] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:34:01] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:34:02] Parsing wrk output: ...
+[DEBUG 07:34:02] Failed to parse wrk output
+[DEBUG 07:34:02] Failed to parse output: 
+[DEBUG 07:34:02] Terminating processes
+[DEBUG 07:34:02] Cleaning up processes...
+[DEBUG 07:34:03] Found nginx PIDs: []
+[DEBUG 07:34:03] Found sslsniff PIDs: []
+[DEBUG 07:34:06] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 3/10...
+[DEBUG 07:34:06] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:34:08] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:34:10] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:34:20] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 227.76
+[DEBUG 07:34:20] Terminating processes
+[DEBUG 07:34:21] Cleaning up processes...
+[DEBUG 07:34:22] Found nginx PIDs: []
+[DEBUG 07:34:22] Found sslsniff PIDs: []
+[DEBUG 07:34:25] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 4/10...
+[DEBUG 07:34:25] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:34:27] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:34:29] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:34:39] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 229.26
+[DEBUG 07:34:39] Terminating processes
+[DEBUG 07:34:39] Cleaning up processes...
+[DEBUG 07:34:41] Found nginx PIDs: []
+[DEBUG 07:34:41] Found sslsniff PIDs: []
+[DEBUG 07:34:44] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 5/10...
+[DEBUG 07:34:44] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:34:46] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:34:48] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:34:58] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 237.70
+[DEBUG 07:34:58] Terminating processes
+[DEBUG 07:34:58] Cleaning up processes...
+[DEBUG 07:35:00] Found nginx PIDs: []
+[DEBUG 07:35:00] Found sslsniff PIDs: []
+[DEBUG 07:35:03] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 6/10...
+[DEBUG 07:35:03] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:35:05] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:35:07] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:35:17] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 229.29
+[DEBUG 07:35:17] Terminating processes
+[DEBUG 07:35:18] Cleaning up processes...
+[DEBUG 07:35:19] Found nginx PIDs: []
+[DEBUG 07:35:19] Found sslsniff PIDs: []
+[DEBUG 07:35:22] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 7/10...
+[DEBUG 07:35:22] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:35:24] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:35:26] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:35:36] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 239.38
+[DEBUG 07:35:36] Terminating processes
+[DEBUG 07:35:36] Cleaning up processes...
+[DEBUG 07:35:38] Found nginx PIDs: []
+[DEBUG 07:35:38] Found sslsniff PIDs: []
+[DEBUG 07:35:41] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 8/10...
+[DEBUG 07:35:41] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:35:43] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:35:45] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:35:55] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 242.44
+[DEBUG 07:35:55] Terminating processes
+[DEBUG 07:35:55] Cleaning up processes...
+[DEBUG 07:35:57] Found nginx PIDs: []
+[DEBUG 07:35:57] Found sslsniff PIDs: []
+[DEBUG 07:36:00] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 9/10...
+[DEBUG 07:36:00] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:36:02] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:36:04] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:36:14] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 218.26
+[DEBUG 07:36:14] Terminating processes
+[DEBUG 07:36:14] Cleaning up processes...
+[DEBUG 07:36:16] Found nginx PIDs: []
+[DEBUG 07:36:16] Found sslsniff PIDs: []
+[DEBUG 07:36:19] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 10/10...
+[DEBUG 07:36:19] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:36:21] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:36:23] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:36:23] Parsing wrk output: ...
+[DEBUG 07:36:23] Failed to parse wrk output
+[DEBUG 07:36:23] Failed to parse output: 
+[DEBUG 07:36:23] Terminating processes
+[DEBUG 07:36:23] Cleaning up processes...
+[DEBUG 07:36:26] Found nginx PIDs: []
+[DEBUG 07:36:26] Found sslsniff PIDs: []
+[DEBUG 07:36:29] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+=== Benchmark Results ===
+Each configuration run 10 times
+
+Baseline:
+  Requests/sec (mean):   389.80
+  Requests/sec (median): 389.72
+  Standard deviation:    10.44
+  Min:                   375.46
+  Max:                   406.08
+  All runs:              [396.65, 375.57, 384.46, 375.46, 384.36, 394.74, 401.19, 384.77, 406.08, 394.67]
+
+Kernel Sslsniff:
+  Requests/sec (mean):   322.71
+  Requests/sec (median): 344.77
+  Standard deviation:    67.60
+  Min:                   223.42
+  Max:                   383.72
+  All runs:              [231.48, 226.82, 344.09, 343.16, 345.46, 378.52, 383.72, 373.74, 376.7, 223.42]
+
+Bpftime Sslsniff:
+  Requests/sec (mean):   232.01
+  Requests/sec (median): 229.29
+  Standard deviation:    8.34
+  Min:                   218.26
+  Max:                   242.44
+  All runs:              [227.76, 229.26, 237.7, 229.29, 239.38, 242.44, 218.26]
+
+Kernel sslsniff performance impact: 17.21% decrease
+bpftime sslsniff performance impact: 40.48% decrease
+bpftime improvement over kernel: -28.11%
+
+Results saved to benchmark/ssl-nginx/benchmark_results_20260616_073629.json
+[DEBUG 07:36:29] Cleaning up before exit
+[DEBUG 07:36:29] Cleaning up processes...
+[DEBUG 07:36:31] Found nginx PIDs: []
+[DEBUG 07:36:31] Found sslsniff PIDs: []
+[DEBUG 07:36:34] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+
+=== Running benchmark for 2kb file ===
+Generating test file of size 2kb...
+  Created benchmark/ssl-nginx/index.html (2048 bytes)
+[DEBUG 07:36:37] Starting benchmark script
+[DEBUG 07:36:37] Current working directory: /home/ubuntu/bpftime
+[DEBUG 07:36:37] Checking command: nginx - EXISTS
+[DEBUG 07:36:37]   Path: /usr/sbin/nginx
+[DEBUG 07:36:37] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 07:36:37] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+[DEBUG 07:36:37] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:36:37] Checking command: wrk - EXISTS
+[DEBUG 07:36:37]   Path: /usr/bin/wrk
+
+=== Running Baseline Tests ===
+[DEBUG 07:36:37] Cleaning up processes...
+[DEBUG 07:36:39] Found nginx PIDs: []
+[DEBUG 07:36:39] Found sslsniff PIDs: []
+[DEBUG 07:36:42] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:36:42] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:36:42] Access log removed successfully
+[DEBUG 07:36:42] Checking command: nginx - EXISTS
+[DEBUG 07:36:42]   Path: /usr/sbin/nginx
+[DEBUG 07:36:42] Current directory: /home/ubuntu/bpftime
+[DEBUG 07:36:42] Checking if nginx.conf exists: True
+[DEBUG 07:36:42] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:36:44] nginx started successfully
+[DEBUG 07:36:44] HTTP status code from nginx: 200
+Run 1/10...
+[DEBUG 07:36:44] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:36:55] wrk exit code: 0
+[DEBUG 07:36:55] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 392.76
+Run 2/10...
+[DEBUG 07:36:55] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:37:05] wrk exit code: 0
+[DEBUG 07:37:05] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 364.76
+Run 3/10...
+[DEBUG 07:37:05] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:37:15] wrk exit code: 0
+[DEBUG 07:37:15] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 384.01
+Run 4/10...
+[DEBUG 07:37:15] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:37:26] wrk exit code: 0
+[DEBUG 07:37:26] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 353.39
+Run 5/10...
+[DEBUG 07:37:26] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:37:36] wrk exit code: 0
+[DEBUG 07:37:36] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 382.36
+Run 6/10...
+[DEBUG 07:37:36] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:37:46] wrk exit code: 0
+[DEBUG 07:37:46] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 342.40
+Run 7/10...
+[DEBUG 07:37:46] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:37:56] wrk exit code: 0
+[DEBUG 07:37:56] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 377.58
+Run 8/10...
+[DEBUG 07:37:56] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:38:07] wrk exit code: 0
+[DEBUG 07:38:07] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 348.96
+Run 9/10...
+[DEBUG 07:38:07] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:38:17] wrk exit code: 0
+[DEBUG 07:38:17] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 380.72
+Run 10/10...
+[DEBUG 07:38:17] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:38:27] wrk exit code: 0
+[DEBUG 07:38:27] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 384.03
+[DEBUG 07:38:27] Terminating nginx
+
+=== Running Kernel sslsniff Tests ===
+[DEBUG 07:38:27] Cleaning up processes...
+[DEBUG 07:38:29] Found nginx PIDs: ['48566', '48568', '48569', '48570', '48571']
+[DEBUG 07:38:29] Found sslsniff PIDs: []
+[DEBUG 07:38:29] Terminating nginx process with PID 48566
+[DEBUG 07:38:29] Terminating nginx process with PID 48568
+[DEBUG 07:38:29] Terminating nginx process with PID 48569
+[DEBUG 07:38:29] Terminating nginx process with PID 48570
+[DEBUG 07:38:29] Terminating nginx process with PID 48571
+[DEBUG 07:38:32] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:38:32] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:38:32] Access log removed successfully
+[DEBUG 07:38:32] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:38:32] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+Run 1/10...
+[DEBUG 07:38:34] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:38:36] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:38:46] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:38:46] Killing sslsniff
+  Requests/sec: 215.31
+Run 2/10...
+[DEBUG 07:38:48] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:38:50] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:39:00] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:39:00] Killing sslsniff
+  Requests/sec: 219.68
+Run 3/10...
+[DEBUG 07:39:03] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:39:05] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:39:15] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:39:15] Killing sslsniff
+  Requests/sec: 226.83
+Run 4/10...
+[DEBUG 07:39:17] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:39:19] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:39:29] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:39:29] Killing sslsniff
+  Requests/sec: 230.03
+Run 5/10...
+[DEBUG 07:39:32] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:39:34] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:39:44] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:39:44] Killing sslsniff
+  Requests/sec: 240.44
+Run 6/10...
+[DEBUG 07:39:46] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:39:48] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:39:58] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:39:58] Killing sslsniff
+  Requests/sec: 226.44
+Run 7/10...
+[DEBUG 07:40:00] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:40:02] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:40:13] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:40:13] Killing sslsniff
+  Requests/sec: 226.20
+Run 8/10...
+[DEBUG 07:40:15] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:40:17] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:40:27] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:40:27] Killing sslsniff
+  Requests/sec: 235.27
+Run 9/10...
+[DEBUG 07:40:29] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:40:31] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:40:41] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:40:41] Killing sslsniff
+  Requests/sec: 234.67
+Run 10/10...
+[DEBUG 07:40:44] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:40:46] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:40:56] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:40:56] Killing sslsniff
+  Requests/sec: 225.64
+[DEBUG 07:40:58] Terminating nginx
+
+=== Running bpftime sslsniff Tests ===
+[DEBUG 07:40:58] Cleaning up processes...
+[DEBUG 07:41:00] Found nginx PIDs: []
+[DEBUG 07:41:00] Found sslsniff PIDs: []
+[DEBUG 07:41:02] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:41:02] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:41:02] Access log removed successfully
+[DEBUG 07:41:02] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:41:02] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 07:41:02] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+Run 1/10...
+[DEBUG 07:41:02] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:41:04] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:41:06] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:41:17] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 225.69
+[DEBUG 07:41:17] Terminating processes
+[DEBUG 07:41:17] Cleaning up processes...
+[DEBUG 07:41:19] Found nginx PIDs: []
+[DEBUG 07:41:19] Found sslsniff PIDs: []
+[DEBUG 07:41:21] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 2/10...
+[DEBUG 07:41:21] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:41:23] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:41:25] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:41:35] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 225.50
+[DEBUG 07:41:35] Terminating processes
+[DEBUG 07:41:36] Cleaning up processes...
+[DEBUG 07:41:37] Found nginx PIDs: []
+[DEBUG 07:41:37] Found sslsniff PIDs: []
+[DEBUG 07:41:40] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 3/10...
+[DEBUG 07:41:40] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:41:42] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:41:44] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:41:54] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 241.92
+[DEBUG 07:41:54] Terminating processes
+[DEBUG 07:41:55] Cleaning up processes...
+[DEBUG 07:41:56] Found nginx PIDs: []
+[DEBUG 07:41:56] Found sslsniff PIDs: []
+[DEBUG 07:41:59] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 4/10...
+[DEBUG 07:41:59] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:42:01] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:42:03] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:42:13] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 222.85
+[DEBUG 07:42:13] Terminating processes
+[DEBUG 07:42:13] Cleaning up processes...
+[DEBUG 07:42:15] Found nginx PIDs: []
+[DEBUG 07:42:15] Found sslsniff PIDs: []
+[DEBUG 07:42:17] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 5/10...
+[DEBUG 07:42:17] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:42:19] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:42:21] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:42:32] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 225.31
+[DEBUG 07:42:32] Terminating processes
+[DEBUG 07:42:32] Cleaning up processes...
+[DEBUG 07:42:34] Found nginx PIDs: []
+[DEBUG 07:42:34] Found sslsniff PIDs: []
+[DEBUG 07:42:36] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 6/10...
+[DEBUG 07:42:36] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:42:38] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:42:40] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:42:50] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 223.62
+[DEBUG 07:42:50] Terminating processes
+[DEBUG 07:42:51] Cleaning up processes...
+[DEBUG 07:42:52] Found nginx PIDs: []
+[DEBUG 07:42:52] Found sslsniff PIDs: []
+[DEBUG 07:42:55] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 7/10...
+[DEBUG 07:42:55] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:42:57] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:42:59] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:42:59] Parsing wrk output: ...
+[DEBUG 07:42:59] Failed to parse wrk output
+[DEBUG 07:42:59] Failed to parse output: 
+[DEBUG 07:42:59] Terminating processes
+[DEBUG 07:42:59] Cleaning up processes...
+[DEBUG 07:43:01] Found nginx PIDs: []
+[DEBUG 07:43:01] Found sslsniff PIDs: []
+[DEBUG 07:43:03] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 8/10...
+[DEBUG 07:43:03] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:43:05] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:43:07] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:43:18] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 226.19
+[DEBUG 07:43:18] Terminating processes
+[DEBUG 07:43:18] Cleaning up processes...
+[DEBUG 07:43:19] Found nginx PIDs: []
+[DEBUG 07:43:19] Found sslsniff PIDs: []
+[DEBUG 07:43:22] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 9/10...
+[DEBUG 07:43:22] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:43:24] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:43:26] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:43:36] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 219.46
+[DEBUG 07:43:36] Terminating processes
+[DEBUG 07:43:37] Cleaning up processes...
+[DEBUG 07:43:38] Found nginx PIDs: []
+[DEBUG 07:43:38] Found sslsniff PIDs: []
+[DEBUG 07:43:41] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 10/10...
+[DEBUG 07:43:41] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:43:43] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:43:45] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:43:55] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 169.51
+[DEBUG 07:43:55] Terminating processes
+[DEBUG 07:43:56] Cleaning up processes...
+[DEBUG 07:43:58] Found nginx PIDs: []
+[DEBUG 07:43:58] Found sslsniff PIDs: []
+[DEBUG 07:44:01] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+=== Benchmark Results ===
+Each configuration run 10 times
+
+Baseline:
+  Requests/sec (mean):   371.10
+  Requests/sec (median): 379.15
+  Standard deviation:    17.42
+  Min:                   342.40
+  Max:                   392.76
+  All runs:              [392.76, 364.76, 384.01, 353.39, 382.36, 342.4, 377.58, 348.96, 380.72, 384.03]
+
+Kernel Sslsniff:
+  Requests/sec (mean):   228.05
+  Requests/sec (median): 226.63
+  Standard deviation:    7.45
+  Min:                   215.31
+  Max:                   240.44
+  All runs:              [215.31, 219.68, 226.83, 230.03, 240.44, 226.44, 226.2, 235.27, 234.67, 225.64]
+
+Bpftime Sslsniff:
+  Requests/sec (mean):   220.01
+  Requests/sec (median): 225.31
+  Standard deviation:    19.94
+  Min:                   169.51
+  Max:                   241.92
+  All runs:              [225.69, 225.5, 241.92, 222.85, 225.31, 223.62, 226.19, 219.46, 169.51]
+
+Kernel sslsniff performance impact: 38.55% decrease
+bpftime sslsniff performance impact: 40.71% decrease
+bpftime improvement over kernel: -3.53%
+
+Results saved to benchmark/ssl-nginx/benchmark_results_20260616_074401.json
+[DEBUG 07:44:01] Cleaning up before exit
+[DEBUG 07:44:01] Cleaning up processes...
+[DEBUG 07:44:03] Found nginx PIDs: []
+[DEBUG 07:44:03] Found sslsniff PIDs: []
+[DEBUG 07:44:06] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+
+=== Running benchmark for 4kb file ===
+Generating test file of size 4kb...
+  Created benchmark/ssl-nginx/index.html (4096 bytes)
+[DEBUG 07:44:10] Starting benchmark script
+[DEBUG 07:44:10] Current working directory: /home/ubuntu/bpftime
+[DEBUG 07:44:10] Checking command: nginx - EXISTS
+[DEBUG 07:44:10]   Path: /usr/sbin/nginx
+[DEBUG 07:44:10] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 07:44:10] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+[DEBUG 07:44:10] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:44:10] Checking command: wrk - EXISTS
+[DEBUG 07:44:10]   Path: /usr/bin/wrk
+
+=== Running Baseline Tests ===
+[DEBUG 07:44:10] Cleaning up processes...
+[DEBUG 07:44:11] Found nginx PIDs: []
+[DEBUG 07:44:11] Found sslsniff PIDs: []
+[DEBUG 07:44:14] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:44:14] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:44:14] Access log removed successfully
+[DEBUG 07:44:14] Checking command: nginx - EXISTS
+[DEBUG 07:44:14]   Path: /usr/sbin/nginx
+[DEBUG 07:44:14] Current directory: /home/ubuntu/bpftime
+[DEBUG 07:44:14] Checking if nginx.conf exists: True
+[DEBUG 07:44:14] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:44:16] nginx started successfully
+[DEBUG 07:44:16] HTTP status code from nginx: 200
+Run 1/10...
+[DEBUG 07:44:16] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:44:27] wrk exit code: 0
+[DEBUG 07:44:27] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 401.67
+Run 2/10...
+[DEBUG 07:44:27] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:44:37] wrk exit code: 0
+[DEBUG 07:44:37] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 362.37
+Run 3/10...
+[DEBUG 07:44:37] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:44:47] wrk exit code: 0
+[DEBUG 07:44:47] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 358.96
+Run 4/10...
+[DEBUG 07:44:47] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:44:58] wrk exit code: 0
+[DEBUG 07:44:58] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 360.11
+Run 5/10...
+[DEBUG 07:44:58] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:45:08] wrk exit code: 0
+[DEBUG 07:45:08] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 351.93
+Run 6/10...
+[DEBUG 07:45:08] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:45:18] wrk exit code: 0
+[DEBUG 07:45:18] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 387.10
+Run 7/10...
+[DEBUG 07:45:18] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:45:28] wrk exit code: 0
+[DEBUG 07:45:28] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 376.64
+Run 8/10...
+[DEBUG 07:45:28] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:45:39] wrk exit code: 0
+[DEBUG 07:45:39] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 379.50
+Run 9/10...
+[DEBUG 07:45:39] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:45:49] wrk exit code: 0
+[DEBUG 07:45:49] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 384.20
+Run 10/10...
+[DEBUG 07:45:49] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:45:59] wrk exit code: 0
+[DEBUG 07:45:59] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 389.18
+[DEBUG 07:45:59] Terminating nginx
+
+=== Running Kernel sslsniff Tests ===
+[DEBUG 07:45:59] Cleaning up processes...
+[DEBUG 07:46:01] Found nginx PIDs: []
+[DEBUG 07:46:01] Found sslsniff PIDs: []
+[DEBUG 07:46:04] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:46:04] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:46:04] Access log removed successfully
+[DEBUG 07:46:04] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:46:04] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+Run 1/10...
+[DEBUG 07:46:06] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:46:08] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:46:18] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:46:18] Killing sslsniff
+  Requests/sec: 253.84
+Run 2/10...
+[DEBUG 07:46:20] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:46:22] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:46:32] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:46:32] Killing sslsniff
+  Requests/sec: 243.41
+Run 3/10...
+[DEBUG 07:46:34] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:46:36] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:46:47] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:46:47] Killing sslsniff
+  Requests/sec: 216.64
+Run 4/10...
+[DEBUG 07:46:49] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:46:51] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:47:01] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:47:01] Killing sslsniff
+  Requests/sec: 240.46
+Run 5/10...
+[DEBUG 07:47:03] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:47:05] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:47:15] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:47:15] Killing sslsniff
+  Requests/sec: 209.76
+Run 6/10...
+[DEBUG 07:47:18] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:47:20] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:47:30] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:47:30] Killing sslsniff
+  Requests/sec: 209.44
+Run 7/10...
+[DEBUG 07:47:32] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:47:34] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:47:44] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:47:44] Killing sslsniff
+  Requests/sec: 225.46
+Run 8/10...
+[DEBUG 07:47:46] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:47:49] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:47:59] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:47:59] Killing sslsniff
+  Requests/sec: 226.85
+Run 9/10...
+[DEBUG 07:48:01] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:48:03] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:48:13] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:48:13] Killing sslsniff
+  Requests/sec: 222.92
+Run 10/10...
+[DEBUG 07:48:15] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:48:17] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:48:28] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:48:28] Killing sslsniff
+  Requests/sec: 244.62
+[DEBUG 07:48:30] Terminating nginx
+
+=== Running bpftime sslsniff Tests ===
+[DEBUG 07:48:30] Cleaning up processes...
+[DEBUG 07:48:32] Found nginx PIDs: []
+[DEBUG 07:48:32] Found sslsniff PIDs: []
+[DEBUG 07:48:34] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:48:34] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:48:34] Access log removed successfully
+[DEBUG 07:48:34] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:48:34] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 07:48:34] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+Run 1/10...
+[DEBUG 07:48:34] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:48:36] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:48:38] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:48:48] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 234.37
+[DEBUG 07:48:48] Terminating processes
+[DEBUG 07:48:49] Cleaning up processes...
+[DEBUG 07:48:51] Found nginx PIDs: []
+[DEBUG 07:48:51] Found sslsniff PIDs: []
+[DEBUG 07:48:53] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 2/10...
+[DEBUG 07:48:53] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:48:56] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:48:58] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:49:08] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 215.06
+[DEBUG 07:49:08] Terminating processes
+[DEBUG 07:49:08] Cleaning up processes...
+[DEBUG 07:49:10] Found nginx PIDs: []
+[DEBUG 07:49:10] Found sslsniff PIDs: []
+[DEBUG 07:49:12] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 3/10...
+[DEBUG 07:49:12] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:49:14] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:49:16] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:49:27] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 219.81
+[DEBUG 07:49:27] Terminating processes
+[DEBUG 07:49:27] Cleaning up processes...
+[DEBUG 07:49:29] Found nginx PIDs: []
+[DEBUG 07:49:29] Found sslsniff PIDs: []
+[DEBUG 07:49:31] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 4/10...
+[DEBUG 07:49:31] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:49:33] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:49:35] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:49:45] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 229.41
+[DEBUG 07:49:45] Terminating processes
+[DEBUG 07:49:46] Cleaning up processes...
+[DEBUG 07:49:47] Found nginx PIDs: []
+[DEBUG 07:49:47] Found sslsniff PIDs: []
+[DEBUG 07:49:50] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 5/10...
+[DEBUG 07:49:50] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:49:52] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:49:54] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:50:04] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 231.87
+[DEBUG 07:50:04] Terminating processes
+[DEBUG 07:50:04] Cleaning up processes...
+[DEBUG 07:50:06] Found nginx PIDs: []
+[DEBUG 07:50:06] Found sslsniff PIDs: []
+[DEBUG 07:50:09] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 6/10...
+[DEBUG 07:50:09] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:50:11] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:50:13] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:50:23] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 230.80
+[DEBUG 07:50:23] Terminating processes
+[DEBUG 07:50:23] Cleaning up processes...
+[DEBUG 07:50:25] Found nginx PIDs: []
+[DEBUG 07:50:25] Found sslsniff PIDs: []
+[DEBUG 07:50:27] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 7/10...
+[DEBUG 07:50:27] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:50:29] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:50:31] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:50:42] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 225.90
+[DEBUG 07:50:42] Terminating processes
+[DEBUG 07:50:42] Cleaning up processes...
+[DEBUG 07:50:44] Found nginx PIDs: []
+[DEBUG 07:50:44] Found sslsniff PIDs: []
+[DEBUG 07:50:46] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 8/10...
+[DEBUG 07:50:46] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:50:48] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:50:50] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:51:01] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 223.43
+[DEBUG 07:51:01] Terminating processes
+[DEBUG 07:51:01] Cleaning up processes...
+[DEBUG 07:51:03] Found nginx PIDs: []
+[DEBUG 07:51:03] Found sslsniff PIDs: []
+[DEBUG 07:51:05] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 9/10...
+[DEBUG 07:51:05] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:51:07] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:51:09] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:51:19] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 235.55
+[DEBUG 07:51:19] Terminating processes
+[DEBUG 07:51:20] Cleaning up processes...
+[DEBUG 07:51:21] Found nginx PIDs: []
+[DEBUG 07:51:21] Found sslsniff PIDs: []
+[DEBUG 07:51:24] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 10/10...
+[DEBUG 07:51:24] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:51:26] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:51:28] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:51:38] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 232.08
+[DEBUG 07:51:38] Terminating processes
+[DEBUG 07:51:38] Cleaning up processes...
+[DEBUG 07:51:40] Found nginx PIDs: []
+[DEBUG 07:51:40] Found sslsniff PIDs: []
+[DEBUG 07:51:43] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+=== Benchmark Results ===
+Each configuration run 10 times
+
+Baseline:
+  Requests/sec (mean):   375.17
+  Requests/sec (median): 378.07
+  Standard deviation:    16.11
+  Min:                   351.93
+  Max:                   401.67
+  All runs:              [401.67, 362.37, 358.96, 360.11, 351.93, 387.1, 376.64, 379.5, 384.2, 389.18]
+
+Kernel Sslsniff:
+  Requests/sec (mean):   229.34
+  Requests/sec (median): 226.16
+  Standard deviation:    15.49
+  Min:                   209.44
+  Max:                   253.84
+  All runs:              [253.84, 243.41, 216.64, 240.46, 209.76, 209.44, 225.46, 226.85, 222.92, 244.62]
+
+Bpftime Sslsniff:
+  Requests/sec (mean):   227.83
+  Requests/sec (median): 230.11
+  Standard deviation:    6.65
+  Min:                   215.06
+  Max:                   235.55
+  All runs:              [234.37, 215.06, 219.81, 229.41, 231.87, 230.8, 225.9, 223.43, 235.55, 232.08]
+
+Kernel sslsniff performance impact: 38.87% decrease
+bpftime sslsniff performance impact: 39.27% decrease
+bpftime improvement over kernel: -0.66%
+
+Results saved to benchmark/ssl-nginx/benchmark_results_20260616_075143.json
+[DEBUG 07:51:43] Cleaning up before exit
+[DEBUG 07:51:43] Cleaning up processes...
+[DEBUG 07:51:44] Found nginx PIDs: []
+[DEBUG 07:51:44] Found sslsniff PIDs: []
+[DEBUG 07:51:47] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+
+=== Running benchmark for 16kb file ===
+Generating test file of size 16kb...
+  Created benchmark/ssl-nginx/index.html (16384 bytes)
+[DEBUG 07:51:50] Starting benchmark script
+[DEBUG 07:51:50] Current working directory: /home/ubuntu/bpftime
+[DEBUG 07:51:50] Checking command: nginx - EXISTS
+[DEBUG 07:51:50]   Path: /usr/sbin/nginx
+[DEBUG 07:51:51] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 07:51:51] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+[DEBUG 07:51:51] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:51:51] Checking command: wrk - EXISTS
+[DEBUG 07:51:51]   Path: /usr/bin/wrk
+
+=== Running Baseline Tests ===
+[DEBUG 07:51:51] Cleaning up processes...
+[DEBUG 07:51:52] Found nginx PIDs: []
+[DEBUG 07:51:52] Found sslsniff PIDs: []
+[DEBUG 07:51:55] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:51:55] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:51:55] Access log removed successfully
+[DEBUG 07:51:55] Checking command: nginx - EXISTS
+[DEBUG 07:51:55]   Path: /usr/sbin/nginx
+[DEBUG 07:51:55] Current directory: /home/ubuntu/bpftime
+[DEBUG 07:51:55] Checking if nginx.conf exists: True
+[DEBUG 07:51:55] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:51:57] nginx started successfully
+[DEBUG 07:51:57] HTTP status code from nginx: 200
+Run 1/10...
+[DEBUG 07:51:57] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:52:07] wrk exit code: 0
+[DEBUG 07:52:07] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 294.52
+Run 2/10...
+[DEBUG 07:52:07] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:52:18] wrk exit code: 0
+[DEBUG 07:52:18] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 292.35
+Run 3/10...
+[DEBUG 07:52:18] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:52:28] wrk exit code: 0
+[DEBUG 07:52:28] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 271.17
+Run 4/10...
+[DEBUG 07:52:28] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:52:38] wrk exit code: 0
+[DEBUG 07:52:38] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 286.05
+Run 5/10...
+[DEBUG 07:52:38] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:52:48] wrk exit code: 0
+[DEBUG 07:52:48] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 263.04
+Run 6/10...
+[DEBUG 07:52:48] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:52:59] wrk exit code: 0
+[DEBUG 07:52:59] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 269.54
+Run 7/10...
+[DEBUG 07:52:59] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:53:09] wrk exit code: 0
+[DEBUG 07:53:09] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 253.34
+Run 8/10...
+[DEBUG 07:53:09] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:53:19] wrk exit code: 0
+[DEBUG 07:53:19] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 297.62
+Run 9/10...
+[DEBUG 07:53:19] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:53:30] wrk exit code: 0
+[DEBUG 07:53:30] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 282.00
+Run 10/10...
+[DEBUG 07:53:30] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:53:40] wrk exit code: 0
+[DEBUG 07:53:40] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 292.94
+[DEBUG 07:53:40] Terminating nginx
+
+=== Running Kernel sslsniff Tests ===
+[DEBUG 07:53:40] Cleaning up processes...
+[DEBUG 07:53:41] Found nginx PIDs: []
+[DEBUG 07:53:41] Found sslsniff PIDs: []
+[DEBUG 07:53:44] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:53:44] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:53:44] Access log removed successfully
+[DEBUG 07:53:44] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:53:44] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+Run 1/10...
+[DEBUG 07:53:46] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:53:48] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:53:58] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:53:58] Killing sslsniff
+  Requests/sec: 162.63
+Run 2/10...
+[DEBUG 07:54:00] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:54:02] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:54:13] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:54:13] Killing sslsniff
+  Requests/sec: 169.49
+Run 3/10...
+[DEBUG 07:54:15] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:54:17] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:54:27] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:54:27] Killing sslsniff
+  Requests/sec: 177.25
+Run 4/10...
+[DEBUG 07:54:29] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:54:31] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:54:42] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:54:42] Killing sslsniff
+  Requests/sec: 172.17
+Run 5/10...
+[DEBUG 07:54:44] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:54:46] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:54:56] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:54:56] Killing sslsniff
+  Requests/sec: 173.38
+Run 6/10...
+[DEBUG 07:54:58] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:55:00] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:55:10] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:55:10] Killing sslsniff
+  Requests/sec: 165.93
+Run 7/10...
+[DEBUG 07:55:12] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:55:14] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:55:25] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:55:25] Killing sslsniff
+  Requests/sec: 173.19
+Run 8/10...
+[DEBUG 07:55:27] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:55:29] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:55:39] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:55:39] Killing sslsniff
+  Requests/sec: 197.67
+Run 9/10...
+[DEBUG 07:55:41] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:55:43] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:55:53] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:55:53] Killing sslsniff
+  Requests/sec: 199.81
+Run 10/10...
+[DEBUG 07:55:55] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 07:55:57] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:56:08] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 07:56:08] Killing sslsniff
+  Requests/sec: 190.98
+[DEBUG 07:56:10] Terminating nginx
+
+=== Running bpftime sslsniff Tests ===
+[DEBUG 07:56:10] Cleaning up processes...
+[DEBUG 07:56:11] Found nginx PIDs: []
+[DEBUG 07:56:11] Found sslsniff PIDs: []
+[DEBUG 07:56:13] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:56:13] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:56:13] Access log removed successfully
+[DEBUG 07:56:13] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:56:13] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 07:56:13] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+Run 1/10...
+[DEBUG 07:56:13] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:56:15] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:56:17] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:56:28] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 204.73
+[DEBUG 07:56:28] Terminating processes
+[DEBUG 07:56:28] Cleaning up processes...
+[DEBUG 07:56:29] Found nginx PIDs: []
+[DEBUG 07:56:29] Found sslsniff PIDs: []
+[DEBUG 07:56:32] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 2/10...
+[DEBUG 07:56:32] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:56:34] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:56:36] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:56:46] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 201.76
+[DEBUG 07:56:46] Terminating processes
+[DEBUG 07:56:46] Cleaning up processes...
+[DEBUG 07:56:48] Found nginx PIDs: []
+[DEBUG 07:56:48] Found sslsniff PIDs: []
+[DEBUG 07:56:50] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 3/10...
+[DEBUG 07:56:50] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:56:52] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:56:54] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:57:04] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 199.29
+[DEBUG 07:57:04] Terminating processes
+[DEBUG 07:57:05] Cleaning up processes...
+[DEBUG 07:57:06] Found nginx PIDs: []
+[DEBUG 07:57:06] Found sslsniff PIDs: []
+[DEBUG 07:57:08] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 4/10...
+[DEBUG 07:57:08] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:57:10] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:57:12] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:57:23] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 186.12
+[DEBUG 07:57:23] Terminating processes
+[DEBUG 07:57:23] Cleaning up processes...
+[DEBUG 07:57:24] Found nginx PIDs: []
+[DEBUG 07:57:24] Found sslsniff PIDs: []
+[DEBUG 07:57:26] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 5/10...
+[DEBUG 07:57:26] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:57:28] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:57:31] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:57:41] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 199.59
+[DEBUG 07:57:41] Terminating processes
+[DEBUG 07:57:41] Cleaning up processes...
+[DEBUG 07:57:42] Found nginx PIDs: []
+[DEBUG 07:57:42] Found sslsniff PIDs: []
+[DEBUG 07:57:45] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 6/10...
+[DEBUG 07:57:45] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:57:47] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:57:49] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:57:59] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 191.87
+[DEBUG 07:57:59] Terminating processes
+[DEBUG 07:57:59] Cleaning up processes...
+[DEBUG 07:58:01] Found nginx PIDs: []
+[DEBUG 07:58:01] Found sslsniff PIDs: []
+[DEBUG 07:58:03] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 7/10...
+[DEBUG 07:58:03] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:58:05] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:58:07] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:58:17] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 200.76
+[DEBUG 07:58:17] Terminating processes
+[DEBUG 07:58:18] Cleaning up processes...
+[DEBUG 07:58:19] Found nginx PIDs: []
+[DEBUG 07:58:19] Found sslsniff PIDs: []
+[DEBUG 07:58:21] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 8/10...
+[DEBUG 07:58:21] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:58:23] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:58:25] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:58:36] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 196.34
+[DEBUG 07:58:36] Terminating processes
+[DEBUG 07:58:36] Cleaning up processes...
+[DEBUG 07:58:37] Found nginx PIDs: []
+[DEBUG 07:58:37] Found sslsniff PIDs: []
+[DEBUG 07:58:40] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 9/10...
+[DEBUG 07:58:40] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:58:42] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:58:44] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:58:54] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 197.59
+[DEBUG 07:58:54] Terminating processes
+[DEBUG 07:58:54] Cleaning up processes...
+[DEBUG 07:58:56] Found nginx PIDs: []
+[DEBUG 07:58:56] Found sslsniff PIDs: []
+[DEBUG 07:58:58] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 10/10...
+[DEBUG 07:58:58] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 07:59:00] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:59:02] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:59:12] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 197.38
+[DEBUG 07:59:12] Terminating processes
+[DEBUG 07:59:12] Cleaning up processes...
+[DEBUG 07:59:14] Found nginx PIDs: []
+[DEBUG 07:59:14] Found sslsniff PIDs: []
+[DEBUG 07:59:16] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+=== Benchmark Results ===
+Each configuration run 10 times
+
+Baseline:
+  Requests/sec (mean):   280.26
+  Requests/sec (median): 284.02
+  Standard deviation:    15.15
+  Min:                   253.34
+  Max:                   297.62
+  All runs:              [294.52, 292.35, 271.17, 286.05, 263.04, 269.54, 253.34, 297.62, 282.0, 292.94]
+
+Kernel Sslsniff:
+  Requests/sec (mean):   178.25
+  Requests/sec (median): 173.28
+  Standard deviation:    13.18
+  Min:                   162.63
+  Max:                   199.81
+  All runs:              [162.63, 169.49, 177.25, 172.17, 173.38, 165.93, 173.19, 197.67, 199.81, 190.98]
+
+Bpftime Sslsniff:
+  Requests/sec (mean):   197.54
+  Requests/sec (median): 198.44
+  Standard deviation:    5.28
+  Min:                   186.12
+  Max:                   204.73
+  All runs:              [204.73, 201.76, 199.29, 186.12, 199.59, 191.87, 200.76, 196.34, 197.59, 197.38]
+
+Kernel sslsniff performance impact: 36.40% decrease
+bpftime sslsniff performance impact: 29.51% decrease
+bpftime improvement over kernel: 10.82%
+
+Results saved to benchmark/ssl-nginx/benchmark_results_20260616_075916.json
+[DEBUG 07:59:16] Cleaning up before exit
+[DEBUG 07:59:16] Cleaning up processes...
+[DEBUG 07:59:18] Found nginx PIDs: []
+[DEBUG 07:59:18] Found sslsniff PIDs: []
+[DEBUG 07:59:20] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+
+=== Running benchmark for 128kb file ===
+Generating test file of size 128kb...
+  Created benchmark/ssl-nginx/index.html (131072 bytes)
+[DEBUG 07:59:23] Starting benchmark script
+[DEBUG 07:59:23] Current working directory: /home/ubuntu/bpftime
+[DEBUG 07:59:23] Checking command: nginx - EXISTS
+[DEBUG 07:59:23]   Path: /usr/sbin/nginx
+[DEBUG 07:59:23] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 07:59:23] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+[DEBUG 07:59:23] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 07:59:23] Checking command: wrk - EXISTS
+[DEBUG 07:59:23]   Path: /usr/bin/wrk
+
+=== Running Baseline Tests ===
+[DEBUG 07:59:23] Cleaning up processes...
+[DEBUG 07:59:25] Found nginx PIDs: []
+[DEBUG 07:59:25] Found sslsniff PIDs: []
+[DEBUG 07:59:27] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 07:59:27] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 07:59:27] Access log removed successfully
+[DEBUG 07:59:27] Checking command: nginx - EXISTS
+[DEBUG 07:59:27]   Path: /usr/sbin/nginx
+[DEBUG 07:59:27] Current directory: /home/ubuntu/bpftime
+[DEBUG 07:59:27] Checking if nginx.conf exists: True
+[DEBUG 07:59:27] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 07:59:29] nginx started successfully
+[DEBUG 07:59:29] HTTP status code from nginx: 200
+Run 1/10...
+[DEBUG 07:59:29] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:59:40] wrk exit code: 0
+[DEBUG 07:59:40] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 113.48
+Run 2/10...
+[DEBUG 07:59:40] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 07:59:50] wrk exit code: 0
+[DEBUG 07:59:50] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 114.74
+Run 3/10...
+[DEBUG 07:59:50] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:00:00] wrk exit code: 0
+[DEBUG 08:00:00] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 115.49
+Run 4/10...
+[DEBUG 08:00:00] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:00:10] wrk exit code: 0
+[DEBUG 08:00:10] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 113.08
+Run 5/10...
+[DEBUG 08:00:10] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:00:21] wrk exit code: 0
+[DEBUG 08:00:21] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 115.90
+Run 6/10...
+[DEBUG 08:00:21] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:00:31] wrk exit code: 0
+[DEBUG 08:00:31] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 117.40
+Run 7/10...
+[DEBUG 08:00:31] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:00:41] wrk exit code: 0
+[DEBUG 08:00:41] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 114.81
+Run 8/10...
+[DEBUG 08:00:41] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:00:51] wrk exit code: 0
+[DEBUG 08:00:51] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 112.95
+Run 9/10...
+[DEBUG 08:00:51] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:01:01] wrk exit code: 0
+[DEBUG 08:01:01] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 114.36
+Run 10/10...
+[DEBUG 08:01:01] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:01:12] wrk exit code: 0
+[DEBUG 08:01:12] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 114.79
+[DEBUG 08:01:12] Terminating nginx
+
+=== Running Kernel sslsniff Tests ===
+[DEBUG 08:01:12] Cleaning up processes...
+[DEBUG 08:01:13] Found nginx PIDs: []
+[DEBUG 08:01:13] Found sslsniff PIDs: []
+[DEBUG 08:01:15] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 08:01:15] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 08:01:15] Access log removed successfully
+[DEBUG 08:01:15] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 08:01:15] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+Run 1/10...
+[DEBUG 08:01:17] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:01:19] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:01:30] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:01:30] Killing sslsniff
+  Requests/sec: 65.24
+Run 2/10...
+[DEBUG 08:01:32] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:01:34] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:01:44] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:01:44] Killing sslsniff
+  Requests/sec: 65.44
+Run 3/10...
+[DEBUG 08:01:46] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:01:48] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:01:58] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:01:58] Killing sslsniff
+  Requests/sec: 66.54
+Run 4/10...
+[DEBUG 08:02:00] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:02:02] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:02:12] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:02:12] Killing sslsniff
+  Requests/sec: 68.53
+Run 5/10...
+[DEBUG 08:02:14] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:02:16] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:02:27] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:02:27] Killing sslsniff
+  Requests/sec: 64.60
+Run 6/10...
+[DEBUG 08:02:29] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:02:31] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:02:41] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:02:41] Killing sslsniff
+  Requests/sec: 66.32
+Run 7/10...
+[DEBUG 08:02:43] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:02:45] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:02:55] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:02:55] Killing sslsniff
+  Requests/sec: 66.55
+Run 8/10...
+[DEBUG 08:02:57] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:02:59] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:03:09] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:03:09] Killing sslsniff
+  Requests/sec: 65.75
+Run 9/10...
+[DEBUG 08:03:11] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:03:13] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:03:24] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:03:24] Killing sslsniff
+  Requests/sec: 57.24
+Run 10/10...
+[DEBUG 08:03:26] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:03:28] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:03:38] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:03:38] Killing sslsniff
+  Requests/sec: 66.85
+[DEBUG 08:03:40] Terminating nginx
+
+=== Running bpftime sslsniff Tests ===
+[DEBUG 08:03:40] Cleaning up processes...
+[DEBUG 08:03:41] Found nginx PIDs: []
+[DEBUG 08:03:41] Found sslsniff PIDs: []
+[DEBUG 08:03:44] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 08:03:44] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 08:03:44] Access log removed successfully
+[DEBUG 08:03:44] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 08:03:44] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 08:03:44] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+Run 1/10...
+[DEBUG 08:03:44] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:03:46] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:03:48] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:03:58] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 61.24
+[DEBUG 08:03:58] Terminating processes
+[DEBUG 08:03:58] Cleaning up processes...
+[DEBUG 08:04:00] Found nginx PIDs: []
+[DEBUG 08:04:00] Found sslsniff PIDs: []
+[DEBUG 08:04:02] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 2/10...
+[DEBUG 08:04:02] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:04:04] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:04:06] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:04:16] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 62.66
+[DEBUG 08:04:16] Terminating processes
+[DEBUG 08:04:17] Cleaning up processes...
+[DEBUG 08:04:18] Found nginx PIDs: []
+[DEBUG 08:04:18] Found sslsniff PIDs: []
+[DEBUG 08:04:20] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 3/10...
+[DEBUG 08:04:20] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:04:22] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:04:24] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:04:35] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 63.71
+[DEBUG 08:04:35] Terminating processes
+[DEBUG 08:04:35] Cleaning up processes...
+[DEBUG 08:04:36] Found nginx PIDs: []
+[DEBUG 08:04:36] Found sslsniff PIDs: []
+[DEBUG 08:04:39] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 4/10...
+[DEBUG 08:04:39] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:04:41] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:04:43] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:04:53] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 63.16
+[DEBUG 08:04:53] Terminating processes
+[DEBUG 08:04:53] Cleaning up processes...
+[DEBUG 08:04:54] Found nginx PIDs: []
+[DEBUG 08:04:54] Found sslsniff PIDs: []
+[DEBUG 08:04:57] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 5/10...
+[DEBUG 08:04:57] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:04:59] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:05:01] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:05:11] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 61.00
+[DEBUG 08:05:11] Terminating processes
+[DEBUG 08:05:13] Cleaning up processes...
+[DEBUG 08:05:14] Found nginx PIDs: []
+[DEBUG 08:05:14] Found sslsniff PIDs: []
+[DEBUG 08:05:17] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 6/10...
+[DEBUG 08:05:17] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:05:19] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:05:21] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:05:31] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 64.22
+[DEBUG 08:05:31] Terminating processes
+[DEBUG 08:05:31] Cleaning up processes...
+[DEBUG 08:05:33] Found nginx PIDs: []
+[DEBUG 08:05:33] Found sslsniff PIDs: []
+[DEBUG 08:05:35] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 7/10...
+[DEBUG 08:05:35] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:05:37] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:05:39] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:05:49] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 63.27
+[DEBUG 08:05:49] Terminating processes
+[DEBUG 08:05:50] Cleaning up processes...
+[DEBUG 08:05:51] Found nginx PIDs: []
+[DEBUG 08:05:51] Found sslsniff PIDs: []
+[DEBUG 08:05:53] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 8/10...
+[DEBUG 08:05:53] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:05:55] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:05:57] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:06:08] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 57.66
+[DEBUG 08:06:08] Terminating processes
+[DEBUG 08:06:08] Cleaning up processes...
+[DEBUG 08:06:09] Found nginx PIDs: []
+[DEBUG 08:06:09] Found sslsniff PIDs: []
+[DEBUG 08:06:12] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 9/10...
+[DEBUG 08:06:12] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:06:14] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:06:16] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:06:26] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 63.14
+[DEBUG 08:06:26] Terminating processes
+[DEBUG 08:06:26] Cleaning up processes...
+[DEBUG 08:06:27] Found nginx PIDs: []
+[DEBUG 08:06:27] Found sslsniff PIDs: []
+[DEBUG 08:06:30] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 10/10...
+[DEBUG 08:06:30] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:06:32] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:06:34] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:06:44] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 64.66
+[DEBUG 08:06:44] Terminating processes
+[DEBUG 08:06:45] Cleaning up processes...
+[DEBUG 08:06:46] Found nginx PIDs: []
+[DEBUG 08:06:46] Found sslsniff PIDs: []
+[DEBUG 08:06:48] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+=== Benchmark Results ===
+Each configuration run 10 times
+
+Baseline:
+  Requests/sec (mean):   114.70
+  Requests/sec (median): 114.77
+  Standard deviation:    1.36
+  Min:                   112.95
+  Max:                   117.40
+  All runs:              [113.48, 114.74, 115.49, 113.08, 115.9, 117.4, 114.81, 112.95, 114.36, 114.79]
+
+Kernel Sslsniff:
+  Requests/sec (mean):   65.31
+  Requests/sec (median): 66.03
+  Standard deviation:    3.03
+  Min:                   57.24
+  Max:                   68.53
+  All runs:              [65.24, 65.44, 66.54, 68.53, 64.6, 66.32, 66.55, 65.75, 57.24, 66.85]
+
+Bpftime Sslsniff:
+  Requests/sec (mean):   62.47
+  Requests/sec (median): 63.15
+  Standard deviation:    2.05
+  Min:                   57.66
+  Max:                   64.66
+  All runs:              [61.24, 62.66, 63.71, 63.16, 61.0, 64.22, 63.27, 57.66, 63.14, 64.66]
+
+Kernel sslsniff performance impact: 43.06% decrease
+bpftime sslsniff performance impact: 45.53% decrease
+bpftime improvement over kernel: -4.34%
+
+Results saved to benchmark/ssl-nginx/benchmark_results_20260616_080648.json
+[DEBUG 08:06:48] Cleaning up before exit
+[DEBUG 08:06:48] Cleaning up processes...
+[DEBUG 08:06:50] Found nginx PIDs: []
+[DEBUG 08:06:50] Found sslsniff PIDs: []
+[DEBUG 08:06:52] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+
+=== Running benchmark for 256kb file ===
+Generating test file of size 256kb...
+  Created benchmark/ssl-nginx/index.html (262144 bytes)
+[DEBUG 08:06:56] Starting benchmark script
+[DEBUG 08:06:56] Current working directory: /home/ubuntu/bpftime
+[DEBUG 08:06:56] Checking command: nginx - EXISTS
+[DEBUG 08:06:56]   Path: /usr/sbin/nginx
+[DEBUG 08:06:56] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 08:06:56] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+[DEBUG 08:06:56] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 08:06:56] Checking command: wrk - EXISTS
+[DEBUG 08:06:56]   Path: /usr/bin/wrk
+
+=== Running Baseline Tests ===
+[DEBUG 08:06:56] Cleaning up processes...
+[DEBUG 08:06:57] Found nginx PIDs: []
+[DEBUG 08:06:57] Found sslsniff PIDs: []
+[DEBUG 08:06:59] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 08:06:59] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 08:06:59] Access log removed successfully
+[DEBUG 08:06:59] Checking command: nginx - EXISTS
+[DEBUG 08:06:59]   Path: /usr/sbin/nginx
+[DEBUG 08:06:59] Current directory: /home/ubuntu/bpftime
+[DEBUG 08:06:59] Checking if nginx.conf exists: True
+[DEBUG 08:06:59] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:07:01] nginx started successfully
+[DEBUG 08:07:02] HTTP status code from nginx: 200
+Run 1/10...
+[DEBUG 08:07:02] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:07:12] wrk exit code: 0
+[DEBUG 08:07:12] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 65.86
+Run 2/10...
+[DEBUG 08:07:12] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:07:22] wrk exit code: 0
+[DEBUG 08:07:22] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 67.02
+Run 3/10...
+[DEBUG 08:07:22] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:07:32] wrk exit code: 0
+[DEBUG 08:07:32] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 67.06
+Run 4/10...
+[DEBUG 08:07:32] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:07:43] wrk exit code: 0
+[DEBUG 08:07:43] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 65.35
+Run 5/10...
+[DEBUG 08:07:43] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:07:53] wrk exit code: 0
+[DEBUG 08:07:53] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 65.69
+Run 6/10...
+[DEBUG 08:07:53] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:08:03] wrk exit code: 0
+[DEBUG 08:08:03] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 65.44
+Run 7/10...
+[DEBUG 08:08:03] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:08:13] wrk exit code: 0
+[DEBUG 08:08:13] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 66.40
+Run 8/10...
+[DEBUG 08:08:13] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:08:23] wrk exit code: 0
+[DEBUG 08:08:23] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 66.12
+Run 9/10...
+[DEBUG 08:08:23] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:08:34] wrk exit code: 0
+[DEBUG 08:08:34] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 65.35
+Run 10/10...
+[DEBUG 08:08:34] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:08:44] wrk exit code: 0
+[DEBUG 08:08:44] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 66.68
+[DEBUG 08:08:44] Terminating nginx
+
+=== Running Kernel sslsniff Tests ===
+[DEBUG 08:08:44] Cleaning up processes...
+[DEBUG 08:08:45] Found nginx PIDs: []
+[DEBUG 08:08:45] Found sslsniff PIDs: []
+[DEBUG 08:08:48] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 08:08:48] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 08:08:48] Access log removed successfully
+[DEBUG 08:08:48] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 08:08:48] Starting nginx with command: nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+Run 1/10...
+[DEBUG 08:08:50] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:08:52] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:09:02] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:09:02] Killing sslsniff
+  Requests/sec: 36.22
+Run 2/10...
+[DEBUG 08:09:04] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:09:06] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:09:16] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:09:16] Killing sslsniff
+  Requests/sec: 38.58
+Run 3/10...
+[DEBUG 08:09:18] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:09:20] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:09:31] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:09:31] Killing sslsniff
+  Requests/sec: 36.14
+Run 4/10...
+[DEBUG 08:09:33] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:09:35] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:09:45] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:09:45] Killing sslsniff
+  Requests/sec: 39.71
+Run 5/10...
+[DEBUG 08:09:47] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:09:49] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:09:59] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:09:59] Killing sslsniff
+  Requests/sec: 37.93
+Run 6/10...
+[DEBUG 08:10:01] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:10:03] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:10:13] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:10:13] Killing sslsniff
+  Requests/sec: 40.04
+Run 7/10...
+[DEBUG 08:10:15] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:10:17] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:10:28] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:10:28] Killing sslsniff
+  Requests/sec: 39.39
+Run 8/10...
+[DEBUG 08:10:30] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:10:32] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:10:42] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:10:42] Killing sslsniff
+  Requests/sec: 39.85
+Run 9/10...
+[DEBUG 08:10:44] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:10:46] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:10:56] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:10:56] Killing sslsniff
+  Requests/sec: 39.69
+Run 10/10...
+[DEBUG 08:10:58] Starting kernel sslsniff: sudo example/tracing/sslsniff/sslsniff
+[DEBUG 08:11:00] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:11:11] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+[DEBUG 08:11:11] Killing sslsniff
+  Requests/sec: 38.71
+[DEBUG 08:11:13] Terminating nginx
+
+=== Running bpftime sslsniff Tests ===
+[DEBUG 08:11:13] Cleaning up processes...
+[DEBUG 08:11:14] Found nginx PIDs: []
+[DEBUG 08:11:14] Found sslsniff PIDs: []
+[DEBUG 08:11:17] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+[DEBUG 08:11:17] Removing access log: /home/ubuntu/bpftime/benchmark/ssl-nginx/access.log
+[DEBUG 08:11:17] Access log removed successfully
+[DEBUG 08:11:17] Checking file: /home/ubuntu/bpftime/example/tracing/sslsniff/sslsniff - EXISTS
+[DEBUG 08:11:17] Checking file: /home/ubuntu/bpftime/build/runtime/agent/libbpftime-agent.so - EXISTS
+[DEBUG 08:11:17] Checking file: /home/ubuntu/bpftime/build/runtime/syscall-server/libbpftime-syscall-server.so - EXISTS
+Run 1/10...
+[DEBUG 08:11:17] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:11:19] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:11:21] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:11:31] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 36.15
+[DEBUG 08:11:31] Terminating processes
+[DEBUG 08:11:31] Cleaning up processes...
+[DEBUG 08:11:33] Found nginx PIDs: []
+[DEBUG 08:11:33] Found sslsniff PIDs: []
+[DEBUG 08:11:35] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 2/10...
+[DEBUG 08:11:35] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:11:37] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:11:39] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:11:49] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 35.93
+[DEBUG 08:11:49] Terminating processes
+[DEBUG 08:11:49] Cleaning up processes...
+[DEBUG 08:11:51] Found nginx PIDs: []
+[DEBUG 08:11:51] Found sslsniff PIDs: []
+[DEBUG 08:11:53] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 3/10...
+[DEBUG 08:11:53] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:11:55] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:11:57] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:12:08] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 33.86
+[DEBUG 08:12:08] Terminating processes
+[DEBUG 08:12:08] Cleaning up processes...
+[DEBUG 08:12:09] Found nginx PIDs: []
+[DEBUG 08:12:09] Found sslsniff PIDs: []
+[DEBUG 08:12:12] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 4/10...
+[DEBUG 08:12:12] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:12:14] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:12:16] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:12:26] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 34.57
+[DEBUG 08:12:26] Terminating processes
+[DEBUG 08:12:26] Cleaning up processes...
+[DEBUG 08:12:28] Found nginx PIDs: []
+[DEBUG 08:12:28] Found sslsniff PIDs: []
+[DEBUG 08:12:30] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 5/10...
+[DEBUG 08:12:30] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:12:32] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:12:34] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:12:44] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 35.76
+[DEBUG 08:12:44] Terminating processes
+[DEBUG 08:12:44] Cleaning up processes...
+[DEBUG 08:12:46] Found nginx PIDs: []
+[DEBUG 08:12:46] Found sslsniff PIDs: []
+[DEBUG 08:12:48] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 6/10...
+[DEBUG 08:12:48] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:12:50] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:12:52] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:13:02] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 35.36
+[DEBUG 08:13:02] Terminating processes
+[DEBUG 08:13:03] Cleaning up processes...
+[DEBUG 08:13:04] Found nginx PIDs: []
+[DEBUG 08:13:04] Found sslsniff PIDs: []
+[DEBUG 08:13:06] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 7/10...
+[DEBUG 08:13:06] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:13:08] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:13:10] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:13:21] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 34.70
+[DEBUG 08:13:21] Terminating processes
+[DEBUG 08:13:21] Cleaning up processes...
+[DEBUG 08:13:22] Found nginx PIDs: []
+[DEBUG 08:13:22] Found sslsniff PIDs: []
+[DEBUG 08:13:25] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 8/10...
+[DEBUG 08:13:25] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:13:27] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:13:29] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:13:39] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 35.31
+[DEBUG 08:13:39] Terminating processes
+[DEBUG 08:13:39] Cleaning up processes...
+[DEBUG 08:13:41] Found nginx PIDs: []
+[DEBUG 08:13:41] Found sslsniff PIDs: []
+[DEBUG 08:13:43] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 9/10...
+[DEBUG 08:13:43] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:13:45] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:13:47] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:13:57] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 35.80
+[DEBUG 08:13:57] Terminating processes
+[DEBUG 08:13:58] Cleaning up processes...
+[DEBUG 08:13:59] Found nginx PIDs: []
+[DEBUG 08:13:59] Found sslsniff PIDs: []
+[DEBUG 08:14:01] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+Run 10/10...
+[DEBUG 08:14:01] Starting sslsniff with bpftime: LD_PRELOAD=build/runtime/syscall-server/libbpftime-syscall-server.so example/tracing/sslsniff/sslsniff
+[DEBUG 08:14:03] Starting nginx with bpftime: LD_PRELOAD=build/runtime/agent/libbpftime-agent.so nginx -c /home/ubuntu/bpftime/benchmark/ssl-nginx/nginx.conf -p /home/ubuntu/bpftime/benchmark/ssl-nginx
+[DEBUG 08:14:06] Running wrk with command: wrk https://127.0.0.1:4043/index.html -c 10 -d 10
+[DEBUG 08:14:16] Parsing wrk output: Running 10s test @ https://127.0.0.1:4043/index.html
+  2 threads and 10 connections
+  Thread Stats  ...
+  Requests/sec: 35.15
+[DEBUG 08:14:16] Terminating processes
+[DEBUG 08:14:16] Cleaning up processes...
+[DEBUG 08:14:17] Found nginx PIDs: []
+[DEBUG 08:14:17] Found sslsniff PIDs: []
+[DEBUG 08:14:20] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+=== Benchmark Results ===
+Each configuration run 10 times
+
+Baseline:
+  Requests/sec (mean):   66.10
+  Requests/sec (median): 65.99
+  Standard deviation:    0.67
+  Min:                   65.35
+  Max:                   67.06
+  All runs:              [65.86, 67.02, 67.06, 65.35, 65.69, 65.44, 66.4, 66.12, 65.35, 66.68]
+
+Kernel Sslsniff:
+  Requests/sec (mean):   38.63
+  Requests/sec (median): 39.05
+  Standard deviation:    1.45
+  Min:                   36.14
+  Max:                   40.04
+  All runs:              [36.22, 38.58, 36.14, 39.71, 37.93, 40.04, 39.39, 39.85, 39.69, 38.71]
+
+Bpftime Sslsniff:
+  Requests/sec (mean):   35.26
+  Requests/sec (median): 35.34
+  Standard deviation:    0.71
+  Min:                   33.86
+  Max:                   36.15
+  All runs:              [36.15, 35.93, 33.86, 34.57, 35.76, 35.36, 34.7, 35.31, 35.8, 35.15]
+
+Kernel sslsniff performance impact: 41.56% decrease
+bpftime sslsniff performance impact: 46.66% decrease
+bpftime improvement over kernel: -8.72%
+
+Results saved to benchmark/ssl-nginx/benchmark_results_20260616_081420.json
+[DEBUG 08:14:20] Cleaning up before exit
+[DEBUG 08:14:20] Cleaning up processes...
+[DEBUG 08:14:21] Found nginx PIDs: []
+[DEBUG 08:14:21] Found sslsniff PIDs: []
+[DEBUG 08:14:24] After cleanup: nginx PIDs: [], sslsniff PIDs: []
+
+
+Results saved to benchmark/ssl-nginx/size_benchmark_20260616_081426.json and benchmark/ssl-nginx/size_benchmark_20260616_081426.txt
+
+Benchmark completed successfully!

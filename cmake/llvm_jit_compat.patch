@@ -1,0 +1,26 @@
+diff --git a/cli/CMakeLists.txt b/cli/CMakeLists.txt
+index 5dbb489..670ae19 100644
+--- a/cli/CMakeLists.txt
++++ b/cli/CMakeLists.txt
+@@ -23,7 +23,7 @@ ExternalProject_Add(
+     GIT_REPOSITORY https://github.com/libbpf/libbpf.git
+     GIT_TAG v1.2.0 # Replace with the version you need
+     CONFIGURE_COMMAND ""
+-    BUILD_COMMAND make -C src -j
++    BUILD_COMMAND make -C src EXTRA_CFLAGS=-Wno-error -j
+     BUILD_IN_SOURCE TRUE
+     INSTALL_COMMAND ""
+     BUILD_BYPRODUCTS ${LIBBPF_SOURCE_DIR}/src/libbpf.a
+diff --git a/src/llvm_jit_context.cpp b/src/llvm_jit_context.cpp
+index 319462c..8aacf8d 100644
+--- a/src/llvm_jit_context.cpp
++++ b/src/llvm_jit_context.cpp
+@@ -294,7 +294,7 @@ std::vector<uint8_t> llvm_bpf_jit_context::do_aot_compile(
+                         module.print(llvm::outs(), nullptr);
+                 }
+                 optimizeModule(module);
+-                module.setTargetTriple(defaultTargetTriple);
++                module.setTargetTriple(llvm::Triple(defaultTargetTriple));
+                 std::string error;
+                 auto target = TargetRegistry::lookupTarget(
+                         defaultTargetTriple, error);

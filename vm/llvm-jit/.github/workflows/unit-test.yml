@@ -1,0 +1,46 @@
+name: Run unit tests of llvm-jit
+
+on:
+  push:
+    branches: "main"
+  pull_request: 
+    branches: "main"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+
+    - name: Install Ninja and lcov (Ubuntu)
+      run: sudo apt install -y ninja-build lcov llvm-15-dev libzstd-dev
+    
+    - name: build
+      run:
+           |
+          LLVM_DIR=/usr/lib/llvm-15/cmake  cmake -B build -DCMAKE_BUILD_TYPE=Debug -DBPFTIME_ENABLE_UNIT_TESTING=1 -DBPFTIME_ENABLE_CODE_COVERAGE=1 -G Ninja
+          cmake --build build --target all -j
+
+    - name: Run example
+      run: |
+        ./build/vm-llvm-example
+        ./build/maps-example
+
+    - name: Run tests
+      run: |
+        ./build/test/unit-test/llvm_jit_tests
+
+    - name: upload coverage
+      run: |
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+        lcov --list coverage.info # debug info
+      
+    - uses: codecov/codecov-action@v4
+      with:
+          fail_ci_if_error: true # optional (default = false)
+          files: ./coverage.info # optional
+          flags: unittests
+          token: ${{ secrets.CODECOV_TOKEN }} # required
+          verbose: true # optional (default = false)

@@ -451,6 +451,7 @@ log "Repository: $REPO"
 log "Output: $OUT"
 log "Mode: $MODE"
 log "Run build: $RUN_BUILD"
+log "Selected benchmarks: uprobe=$RUN_UPROBE syscall=$RUN_SYSCALL syscount-nginx=$RUN_SYSCOUNT ssl-nginx=$RUN_SSL_NGINX mpk=$RUN_MPK"
 log "SSL_NGINX_SIZES: $SSL_NGINX_SIZES"
 
 if [[ ! -d "$REPO" ]]; then
@@ -510,6 +511,13 @@ if [[ "$RUN_BUILD" == "1" ]]; then
   export LLVM_CMAKE_ARG
 
   if [[ "$FAILURES" == "0" ]]; then
+    BUILD_ATTACH_IMPL_EXAMPLE_FLAG=0
+    if [[ "$RUN_SYSCOUNT" == "1" || "$RUN_SSL_NGINX" == "1" ]]; then
+      BUILD_ATTACH_IMPL_EXAMPLE_FLAG=1
+    fi
+    export BUILD_ATTACH_IMPL_EXAMPLE_FLAG
+    export RUN_UPROBE RUN_SYSCALL RUN_SYSCOUNT RUN_SSL_NGINX
+
     if ! run_step build_bpftime_non_mpk bash -lc '
     set -e
     cmake -Bbuild ${LLVM_CMAKE_ARG} \
@@ -519,13 +527,23 @@ if [[ "$RUN_BUILD" == "1" ]]; then
       -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO \
       -DENABLE_PROBE_WRITE_CHECK=0 \
       -DENABLE_PROBE_READ_CHECK=0 \
-      -DBUILD_ATTACH_IMPL_EXAMPLE=1
+      -DBUILD_ATTACH_IMPL_EXAMPLE=${BUILD_ATTACH_IMPL_EXAMPLE_FLAG}
     cmake --build build --config RelWithDebInfo --target install -j"$(nproc)"
-    cmake --build build --config RelWithDebInfo --target attach_impl_example_nginx -j"$(nproc)" || true
-    make -C benchmark/uprobe
-    make -C benchmark/syscall
-    make -C benchmark/syscount-nginx
-    make -C benchmark/ssl-nginx
+    if [[ "$BUILD_ATTACH_IMPL_EXAMPLE_FLAG" == "1" ]]; then
+      cmake --build build --config RelWithDebInfo --target attach_impl_example_nginx -j"$(nproc)" || true
+    fi
+    if [[ "$RUN_UPROBE" == "1" ]]; then
+      make -C benchmark/uprobe
+    fi
+    if [[ "$RUN_SYSCALL" == "1" ]]; then
+      make -C benchmark/syscall
+    fi
+    if [[ "$RUN_SYSCOUNT" == "1" ]]; then
+      make -C benchmark/syscount-nginx
+    fi
+    if [[ "$RUN_SSL_NGINX" == "1" ]]; then
+      make -C benchmark/ssl-nginx
+    fi
     '; then
       log "Build failed; skipping benchmark execution"
       RUN_UPROBE=0

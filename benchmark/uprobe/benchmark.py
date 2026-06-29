@@ -9,11 +9,10 @@ import sys
 import subprocess
 import argparse  # Add this import for argument parsing
 
-# Fix the path structure to avoid duplicate bpftime directory
-# Set up paths to work from project root
-PROJECT_ROOT = pathlib.Path(os.getcwd())
-# If we're already in the bpftime directory, don't add it again
-if PROJECT_ROOT.name == "bpftime":
+# Set up paths to work from the project root. Older VM runs used
+# /home/ubuntu/bpftime, but fresh clones may use any directory name.
+PROJECT_ROOT = pathlib.Path(os.getcwd()).resolve()
+if (PROJECT_ROOT / "benchmark").is_dir():
     BENCHMARK_DIR = PROJECT_ROOT / "benchmark"
 else:
     BENCHMARK_DIR = PROJECT_ROOT / "bpftime" / "benchmark"

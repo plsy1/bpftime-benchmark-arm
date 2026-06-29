@@ -92,6 +92,7 @@ RUN_MPK="${RUN_MPK:-0}"
 USER_SSL_NGINX_SIZES="${SSL_NGINX_SIZES:-}"
 USER_UPROBE_ITER="${UPROBE_ITER:-}"
 USER_LLVM_DIR="${LLVM_DIR:-}"
+FAILURES=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -313,16 +314,17 @@ run_step() {
   local name="$1"
   shift
   log "===== START: $name ====="
-  set +e
   (
     cd "$REPO"
     "$@"
   ) >"$OUT/${name}.stdout.log" 2>"$OUT/${name}.stderr.log"
   local rc=$?
-  set -e
   echo "$rc" >"$OUT/${name}.rc"
   log "===== END: $name rc=$rc ====="
-  return 0
+  if [[ "$rc" != "0" ]]; then
+    FAILURES=$((FAILURES + 1))
+  fi
+  return "$rc"
 }
 
 cleanup_bpftime() {
@@ -354,6 +356,57 @@ prepare_compat_paths() {
     mkdir -p "$REPO/example/libbpf-tools/syscount"
     ln -sf ../../tracing/syscount/syscount "$REPO/example/libbpf-tools/syscount/syscount"
     log "Created compatibility symlink for syscount"
+  fi
+}
+
+prepare_third_party_deps() {
+  if [[ -e "$REPO/third_party/libbpf/src/Makefile" ]]; then
+    return 0
+  fi
+
+  log "third_party/libbpf is missing; preparing bpftool/libbpf dependency"
+  mkdir -p "$REPO/third_party"
+
+  if [[ -d "$REPO/third_party/bpftool/.git" ]]; then
+    (
+      cd "$REPO/third_party/bpftool"
+      git fetch --depth 1 origin master || true
+      git submodule update --init --recursive --depth 1
+    ) >>"$OUT/run.log" 2>&1 || true
+  else
+    rm -rf "$REPO/third_party/bpftool"
+    git clone --depth 1 --recurse-submodules --shallow-submodules \
+      https://github.com/libbpf/bpftool "$REPO/third_party/bpftool" >>"$OUT/run.log" 2>&1 || true
+  fi
+
+  if [[ ! -e "$REPO/third_party/bpftool/src/Makefile" ]] && command -v curl >/dev/null 2>&1; then
+    log "git clone did not prepare bpftool; trying bpftool tarball fallback"
+    rm -rf "$REPO/third_party/bpftool"
+    mkdir -p "$REPO/third_party/bpftool"
+    curl -L --retry 3 --retry-delay 2 \
+      https://github.com/libbpf/bpftool/archive/refs/heads/master.tar.gz \
+      -o "$OUT/bpftool-master.tar.gz" >>"$OUT/run.log" 2>&1 || true
+    if [[ -s "$OUT/bpftool-master.tar.gz" ]]; then
+      tar -xzf "$OUT/bpftool-master.tar.gz" \
+        -C "$REPO/third_party/bpftool" --strip-components=1 >>"$OUT/run.log" 2>&1 || true
+    fi
+  fi
+
+  if [[ ! -e "$REPO/third_party/libbpf/src/Makefile" ]] && command -v curl >/dev/null 2>&1; then
+    log "preparing libbpf tarball fallback"
+    mkdir -p "$REPO/third_party/bpftool/libbpf"
+    curl -L --retry 3 --retry-delay 2 \
+      https://github.com/libbpf/libbpf/archive/refs/heads/master.tar.gz \
+      -o "$OUT/libbpf-master.tar.gz" >>"$OUT/run.log" 2>&1 || true
+    if [[ -s "$OUT/libbpf-master.tar.gz" ]]; then
+      tar -xzf "$OUT/libbpf-master.tar.gz" \
+        -C "$REPO/third_party/bpftool/libbpf" --strip-components=1 >>"$OUT/run.log" 2>&1 || true
+    fi
+  fi
+
+  if [[ ! -e "$REPO/third_party/bpftool/src/Makefile" || ! -e "$REPO/third_party/libbpf/src/Makefile" ]]; then
+    log "ERROR: failed to prepare third_party/bpftool and third_party/libbpf. Check network access and dependency logs."
+    return 1
   fi
 }
 
@@ -437,6 +490,16 @@ for cmd in cmake make ninja clang gcc g++ python3 sudo bpftool nginx wrk git; do
 done | tee "$OUT/tools.txt" | tee -a "$OUT/run.log" >/dev/null
 
 if [[ "$RUN_BUILD" == "1" ]]; then
+  if ! prepare_third_party_deps; then
+    log "Build cannot continue without third_party/libbpf"
+    FAILURES=$((FAILURES + 1))
+    RUN_UPROBE=0
+    RUN_SYSCALL=0
+    RUN_SYSCOUNT=0
+    RUN_SSL_NGINX=0
+    RUN_MPK=0
+  fi
+
   LLVM_CMAKE_ARG=""
   if LLVM_CMAKE_DIR="$(detect_llvm_dir)"; then
     log "Using LLVM CMake directory: $LLVM_CMAKE_DIR"
@@ -446,7 +509,9 @@ if [[ "$RUN_BUILD" == "1" ]]; then
   fi
   export LLVM_CMAKE_ARG
 
-  run_step build_bpftime_non_mpk bash -lc '
+  if [[ "$FAILURES" == "0" ]]; then
+    if ! run_step build_bpftime_non_mpk bash -lc '
+    set -e
     cmake -Bbuild ${LLVM_CMAKE_ARG} \
       -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo \
       -DBPFTIME_LLVM_JIT=1 \
@@ -461,7 +526,15 @@ if [[ "$RUN_BUILD" == "1" ]]; then
     make -C benchmark/syscall
     make -C benchmark/syscount-nginx
     make -C benchmark/ssl-nginx
-  '
+    '; then
+      log "Build failed; skipping benchmark execution"
+      RUN_UPROBE=0
+      RUN_SYSCALL=0
+      RUN_SYSCOUNT=0
+      RUN_SSL_NGINX=0
+      RUN_MPK=0
+    fi
+  fi
 else
   log "Skipping build because RUN_BUILD=0"
 fi
@@ -505,3 +578,8 @@ log "Done"
 log "Result directory: $OUT"
 log "Archive: $OUT.tar.gz"
 log "Please send back the .tar.gz archive and run.log if possible."
+
+if [[ "$FAILURES" != "0" ]]; then
+  log "Completed with $FAILURES failed step(s)"
+  exit 1
+fi

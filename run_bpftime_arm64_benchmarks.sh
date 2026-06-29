@@ -549,6 +549,7 @@ if [[ "$RUN_BUILD" == "1" ]]; then
       cmake --build build --config RelWithDebInfo --target attach_impl_example_nginx -j"$(nproc)" || true
     fi
     if [[ "$RUN_UPROBE" == "1" ]]; then
+      make -C benchmark test
       make -C benchmark/uprobe
     fi
     if [[ "$RUN_SYSCALL" == "1" ]]; then

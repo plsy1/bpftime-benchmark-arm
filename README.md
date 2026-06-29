@@ -63,7 +63,20 @@ To check whether the benchmark environment works before running the full benchma
 Smoke mode uses:
 
 - `uprobe --iter 1`
+- `uprobe --test-iter 10000`
 - `ssl-nginx` with `1kb` payload only
+
+To smoke-test only the two benchmarks needed for the ARM64 run:
+
+```bash
+./run_bpftime_arm64_benchmarks.sh --clone --mode smoke --skip-syscall --skip-syscount
+```
+
+For the full uprobe + ssl-nginx run:
+
+```bash
+./run_bpftime_arm64_benchmarks.sh --clone --skip-syscall --skip-syscount
+```
 
 ## Benchmark Selection
 
@@ -147,6 +160,7 @@ The output includes:
 --no-build                Do not build; only run benchmarks.
 --mode MODE               full or smoke.
 --uprobe-iter N           Number of uprobe outer iterations.
+--uprobe-test-iter N      Inner iterations for uprobe benchmark/test.
 --ssl-sizes LIST          Comma-separated ssl-nginx sizes.
 --only NAME               Run only one benchmark.
 --skip-uprobe             Skip uprobe benchmark.

@@ -39,8 +39,11 @@ Options:
   --branch BRANCH           Git branch used by --clone. Default: repository default branch.
   --workdir DIR             Parent directory for cloned repo. Default: ./bpftime-arm64-run.
   --mode MODE               full or smoke. Default: full.
-                            smoke uses uprobe --iter 1 and ssl-nginx 1kb only.
+                            smoke uses uprobe --iter 1, uprobe --test-iter 10000,
+                            and ssl-nginx 1kb only.
   --uprobe-iter N           Number of uprobe outer iterations. Default: 10 in full, 1 in smoke.
+  --uprobe-test-iter N      Inner iterations passed to benchmark/uprobe/benchmark.py.
+                            Default: 100000 in full, 10000 in smoke.
   --ssl-sizes LIST          Comma-separated ssl-nginx sizes.
                             Default: 16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb.
   --only NAME               Run only one benchmark: uprobe, syscall, syscount, ssl-nginx, mpk.
@@ -91,6 +94,7 @@ RUN_SSL_NGINX="${RUN_SSL_NGINX:-1}"
 RUN_MPK="${RUN_MPK:-0}"
 USER_SSL_NGINX_SIZES="${SSL_NGINX_SIZES:-}"
 USER_UPROBE_ITER="${UPROBE_ITER:-}"
+USER_UPROBE_TEST_ITER="${UPROBE_TEST_ITER:-}"
 USER_LLVM_DIR="${LLVM_DIR:-}"
 FAILURES=0
 
@@ -148,6 +152,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --uprobe-iter=*)
       USER_UPROBE_ITER="${1#*=}"
+      shift
+      ;;
+    --uprobe-test-iter)
+      USER_UPROBE_TEST_ITER="${2:?missing value for --uprobe-test-iter}"
+      shift 2
+      ;;
+    --uprobe-test-iter=*)
+      USER_UPROBE_TEST_ITER="${1#*=}"
       shift
       ;;
     --ssl-sizes)
@@ -298,9 +310,11 @@ esac
 
 if [[ "$MODE" == "smoke" ]]; then
   UPROBE_ITER="${USER_UPROBE_ITER:-1}"
+  UPROBE_TEST_ITER="${USER_UPROBE_TEST_ITER:-10000}"
   SSL_NGINX_SIZES="${USER_SSL_NGINX_SIZES:-1kb}"
 else
   UPROBE_ITER="${USER_UPROBE_ITER:-10}"
+  UPROBE_TEST_ITER="${USER_UPROBE_TEST_ITER:-100000}"
   SSL_NGINX_SIZES="${USER_SSL_NGINX_SIZES:-16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb}"
 fi
 
@@ -452,6 +466,8 @@ log "Output: $OUT"
 log "Mode: $MODE"
 log "Run build: $RUN_BUILD"
 log "Selected benchmarks: uprobe=$RUN_UPROBE syscall=$RUN_SYSCALL syscount-nginx=$RUN_SYSCOUNT ssl-nginx=$RUN_SSL_NGINX mpk=$RUN_MPK"
+log "UPROBE_ITER: $UPROBE_ITER"
+log "UPROBE_TEST_ITER: $UPROBE_TEST_ITER"
 log "SSL_NGINX_SIZES: $SSL_NGINX_SIZES"
 
 if [[ ! -d "$REPO" ]]; then
@@ -561,7 +577,7 @@ prepare_compat_paths
 cleanup_bpftime
 
 if [[ "$RUN_UPROBE" == "1" ]]; then
-  run_step uprobe python3 benchmark/uprobe/benchmark.py --iter "$UPROBE_ITER"
+  run_step uprobe python3 benchmark/uprobe/benchmark.py --iter "$UPROBE_ITER" --test-iter "$UPROBE_TEST_ITER"
   cleanup_bpftime
 fi
 

@@ -16,9 +16,10 @@ import matplotlib as mpl
 
 # Configuration
 NUM_RUNS = 10
-WRK_CMD = ["wrk", "http://127.0.0.1:801/index.html", "-c", "10", "-d", "10"]
+NGINX_PORT = os.environ.get("SYSCOUNT_NGINX_PORT", "1801")
+WRK_CMD = ["wrk", f"http://127.0.0.1:{NGINX_PORT}/index.html", "-c", "10", "-d", "10"]
 NGINX_CMD = ["nginx", "-c", "nginx.conf", "-p", "benchmark/syscount-nginx"]
-TEST_URL = "http://127.0.0.1:801/index.html"
+TEST_URL = f"http://127.0.0.1:{NGINX_PORT}/index.html"
 SYSCOUNT_PATH = "example/tracing/syscount/syscount"
 AGENT_PATH = "build/runtime/agent/libbpftime-agent.so"
 SYSCALL_SERVER_PATH = "build/runtime/syscall-server/libbpftime-syscall-server.so"
@@ -602,7 +603,7 @@ def generate_report(avgs, result_filename, timestamp):
         "",
         "## Test Environment",
         f"- **Test Date**: {timestamp[:4]}-{timestamp[4:6]}-{timestamp[6:8]}",
-        "- **Benchmark Tool**: wrk (`http://127.0.0.1:801/index.html`, concurrency: 100, duration: 10s)",
+        f"- **Benchmark Tool**: wrk (`{TEST_URL}`, concurrency: 10, duration: 10s)",
         f"- **Number of Runs**: {NUM_RUNS}",
         "",
         "## Performance Results",
@@ -924,6 +925,11 @@ def main():
             print("\n=== Benchmark Complete ===")
             print(f"Report: {report_path}")
             print(f"Chart: {chart_path}")
+
+        missing_results = [name for name, values in results.items() if not values]
+        if missing_results:
+            debug_print(f"ERROR: missing valid results for: {', '.join(missing_results)}")
+            sys.exit(1)
         
     except KeyboardInterrupt:
         print("\nBenchmark interrupted.")
@@ -935,4 +941,4 @@ def main():
         cleanup_processes()
 
 if __name__ == "__main__":
-    main() 
+    main()

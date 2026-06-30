@@ -59,6 +59,7 @@ benchmark-logs-error.txt
 benchmark-results*/
 benchmark-results*.tar.gz
 benchmark/**/benchmark-logs*.txt
+benchmark/**/benchmark_results*.json
 benchmark/**/absolute_performance*.png
 benchmark/**/benchmark_chart.png
 benchmark/**/reports.md

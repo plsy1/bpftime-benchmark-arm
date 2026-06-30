@@ -1,6 +1,12 @@
 name: ARM64 Smoke Benchmarks
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/arm64-smoke-benchmarks.yml"
+      - "run_bpftime_arm64_benchmarks.sh"
   workflow_dispatch:
     inputs:
       uprobe_test_iter:

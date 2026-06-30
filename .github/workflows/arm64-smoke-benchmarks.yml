@@ -65,14 +65,17 @@ jobs:
           clang --version
 
       - name: Run smoke benchmarks
+        env:
+          UPROBE_TEST_ITER: ${{ github.event.inputs.uprobe_test_iter || '10000' }}
+          SSL_SIZES: ${{ github.event.inputs.ssl_sizes || '1kb' }}
         run: |
           ./run_bpftime_arm64_benchmarks.sh \
             --build \
             --mode smoke \
             --skip-syscall \
             --skip-syscount \
-            --uprobe-test-iter "${{ inputs.uprobe_test_iter }}" \
-            --ssl-sizes "${{ inputs.ssl_sizes }}" \
+            --uprobe-test-iter "$UPROBE_TEST_ITER" \
+            --ssl-sizes "$SSL_SIZES" \
             --output-dir "$PWD/benchmark-results-arm64-smoke"
 
       - name: Upload benchmark results

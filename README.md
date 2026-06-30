@@ -78,6 +78,35 @@ For the full uprobe + ssl-nginx run:
 ./run_bpftime_arm64_benchmarks.sh --clone --skip-syscall --skip-syscount
 ```
 
+## GitHub Actions
+
+The repository also provides one manually triggered ARM64 workflow:
+
+```text
+Actions -> ARM64 Benchmarks -> Run workflow
+```
+
+The `target` input selects what to run:
+
+```text
+smoke           Run uprobe + ssl-nginx smoke test.
+uprobe_full     Run full uprobe benchmark only.
+ssl_nginx_full  Run full ssl-nginx benchmark only.
+both_full       Run full uprobe and full ssl-nginx as separate jobs.
+```
+
+Useful manual inputs:
+
+```text
+uprobe_iter       Default full value: 10
+uprobe_test_iter  Default full value: 100000
+ssl_sizes         Default full value: 16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb
+```
+
+Leave these inputs empty to use the default value for the selected target. For `smoke`, the default is `uprobe_test_iter=10000` and `ssl_sizes=1kb`.
+
+Each job uploads a result artifact containing the output directory, logs, copied benchmark result files, and a `.tar.gz` archive.
+
 ## Benchmark Selection
 
 Run only one benchmark:

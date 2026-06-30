@@ -1,4 +1,4 @@
-name: ARM64 Smoke Benchmarks
+name: ARM64 Benchmarks
 
 on:
   push:
@@ -9,18 +9,33 @@ on:
       - "run_bpftime_arm64_benchmarks.sh"
   workflow_dispatch:
     inputs:
+      target:
+        description: "Benchmark target to run"
+        required: true
+        default: "smoke"
+        type: choice
+        options:
+          - smoke
+          - uprobe_full
+          - ssl_nginx_full
+          - both_full
       uprobe_test_iter:
-        description: "Inner iterations for uprobe smoke test"
+        description: "Inner iterations for uprobe. Leave empty for target default."
         required: false
-        default: "10000"
+        default: ""
+      uprobe_iter:
+        description: "Outer iterations for full uprobe. Leave empty for target default."
+        required: false
+        default: ""
       ssl_sizes:
-        description: "Comma-separated ssl-nginx payload sizes"
+        description: "Comma-separated ssl-nginx payload sizes. Leave empty for target default."
         required: false
-        default: "1kb"
+        default: ""
 
 jobs:
   smoke:
     name: uprobe + ssl-nginx smoke
+    if: github.event_name == 'push' || github.event.inputs.target == 'smoke'
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 360
 
@@ -88,4 +103,144 @@ jobs:
           path: |
             benchmark-results-arm64-smoke
             benchmark-results-arm64-smoke.tar.gz
+          if-no-files-found: warn
+
+  uprobe-full:
+    name: uprobe full
+    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.target == 'uprobe_full' || github.event.inputs.target == 'both_full')
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            binutils-dev \
+            build-essential \
+            ca-certificates \
+            clang \
+            cmake \
+            curl \
+            git \
+            libboost-all-dev \
+            libelf-dev \
+            libncurses-dev \
+            libssl-dev \
+            libtool \
+            libyaml-cpp-dev \
+            llvm \
+            llvm-dev \
+            nginx \
+            pkg-config \
+            python3 \
+            python3-matplotlib \
+            python3-numpy \
+            systemtap-sdt-dev \
+            wrk \
+            zlib1g-dev
+
+      - name: Show runner information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+          llvm-config --version || true
+          clang --version
+
+      - name: Run uprobe full benchmark
+        env:
+          UPROBE_ITER: ${{ github.event.inputs.uprobe_iter || '10' }}
+          UPROBE_TEST_ITER: ${{ github.event.inputs.uprobe_test_iter || '100000' }}
+        run: |
+          ./run_bpftime_arm64_benchmarks.sh \
+            --build \
+            --mode full \
+            --only uprobe \
+            --uprobe-iter "$UPROBE_ITER" \
+            --uprobe-test-iter "$UPROBE_TEST_ITER" \
+            --output-dir "$PWD/benchmark-results-arm64-uprobe-full"
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arm64-uprobe-full-benchmark-results
+          path: |
+            benchmark-results-arm64-uprobe-full
+            benchmark-results-arm64-uprobe-full.tar.gz
+          if-no-files-found: warn
+
+  ssl-nginx-full:
+    name: ssl-nginx full
+    if: github.event_name == 'workflow_dispatch' && (github.event.inputs.target == 'ssl_nginx_full' || github.event.inputs.target == 'both_full')
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            binutils-dev \
+            build-essential \
+            ca-certificates \
+            clang \
+            cmake \
+            curl \
+            git \
+            libboost-all-dev \
+            libelf-dev \
+            libncurses-dev \
+            libssl-dev \
+            libtool \
+            libyaml-cpp-dev \
+            llvm \
+            llvm-dev \
+            nginx \
+            pkg-config \
+            python3 \
+            python3-matplotlib \
+            python3-numpy \
+            systemtap-sdt-dev \
+            wrk \
+            zlib1g-dev
+
+      - name: Show runner information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+          llvm-config --version || true
+          clang --version
+
+      - name: Run ssl-nginx full benchmark
+        env:
+          SSL_SIZES: ${{ github.event.inputs.ssl_sizes || '16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb' }}
+        run: |
+          ./run_bpftime_arm64_benchmarks.sh \
+            --build \
+            --mode full \
+            --only ssl-nginx \
+            --ssl-sizes "$SSL_SIZES" \
+            --output-dir "$PWD/benchmark-results-arm64-ssl-nginx-full"
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arm64-ssl-nginx-full-benchmark-results
+          path: |
+            benchmark-results-arm64-ssl-nginx-full
+            benchmark-results-arm64-ssl-nginx-full.tar.gz
           if-no-files-found: warn

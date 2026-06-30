@@ -73,6 +73,5 @@ jobs:
         with:
           name: arm64-ssl-nginx-full-benchmark-results
           path: |
-            benchmark-results-arm64-ssl-nginx-full
             benchmark-results-arm64-ssl-nginx-full.tar.gz
           if-no-files-found: warn

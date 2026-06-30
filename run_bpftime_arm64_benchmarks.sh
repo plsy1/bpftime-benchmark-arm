@@ -607,7 +607,14 @@ fi
 collect_outputs
 
 log "Creating archive"
-tar -czf "$OUT.tar.gz" -C "$REPO" "$(basename "$OUT")" >>"$OUT/run.log" 2>&1 || true
+tar_log="$(mktemp)"
+if tar -czf "$OUT.tar.gz" -C "$(dirname "$OUT")" "$(basename "$OUT")" >"$tar_log" 2>&1; then
+  cat "$tar_log" >>"$OUT/run.log"
+else
+  cat "$tar_log" >>"$OUT/run.log"
+  log "WARNING: failed to create archive"
+fi
+rm -f "$tar_log"
 
 log "Done"
 log "Result directory: $OUT"

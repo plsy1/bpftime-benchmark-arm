@@ -79,6 +79,5 @@ jobs:
         with:
           name: arm64-uprobe-full-benchmark-results
           path: |
-            benchmark-results-arm64-uprobe-full
             benchmark-results-arm64-uprobe-full.tar.gz
           if-no-files-found: warn

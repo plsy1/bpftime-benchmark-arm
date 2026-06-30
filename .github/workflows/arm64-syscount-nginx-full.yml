@@ -65,6 +65,5 @@ jobs:
         with:
           name: arm64-syscount-nginx-full-benchmark-results
           path: |
-            benchmark-results-arm64-syscount-nginx-full
             benchmark-results-arm64-syscount-nginx-full.tar.gz
           if-no-files-found: warn

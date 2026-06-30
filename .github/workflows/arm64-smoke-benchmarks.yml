@@ -1,0 +1,80 @@
+name: ARM64 Smoke Benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      uprobe_test_iter:
+        description: "Inner iterations for uprobe smoke test"
+        required: false
+        default: "10000"
+      ssl_sizes:
+        description: "Comma-separated ssl-nginx payload sizes"
+        required: false
+        default: "1kb"
+
+jobs:
+  smoke:
+    name: uprobe + ssl-nginx smoke
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            binutils-dev \
+            build-essential \
+            ca-certificates \
+            clang \
+            cmake \
+            curl \
+            git \
+            libboost-all-dev \
+            libelf-dev \
+            libncurses-dev \
+            libssl-dev \
+            libtool \
+            libyaml-cpp-dev \
+            llvm \
+            llvm-dev \
+            nginx \
+            pkg-config \
+            python3 \
+            systemtap-sdt-dev \
+            wrk \
+            zlib1g-dev
+
+      - name: Show runner information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+          llvm-config --version || true
+          clang --version
+
+      - name: Run smoke benchmarks
+        run: |
+          ./run_bpftime_arm64_benchmarks.sh \
+            --build \
+            --mode smoke \
+            --skip-syscall \
+            --skip-syscount \
+            --uprobe-test-iter "${{ inputs.uprobe_test_iter }}" \
+            --ssl-sizes "${{ inputs.ssl_sizes }}" \
+            --output-dir "$PWD/benchmark-results-arm64-smoke"
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arm64-smoke-benchmark-results
+          path: |
+            benchmark-results-arm64-smoke
+            benchmark-results-arm64-smoke.tar.gz
+          if-no-files-found: warn

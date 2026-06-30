@@ -80,32 +80,23 @@ For the full uprobe + ssl-nginx run:
 
 ## GitHub Actions
 
-The repository also provides one manually triggered ARM64 workflow:
+The repository provides three manually triggered ARM64 workflows:
 
 ```text
-Actions -> ARM64 Benchmarks -> Run workflow
+Actions -> ARM64 Smoke -> Run workflow
+Actions -> ARM64 Uprobe Full -> Run workflow
+Actions -> ARM64 SSL-nginx Full -> Run workflow
 ```
 
-The `target` input selects what to run:
+Workflow defaults:
 
 ```text
-smoke           Run uprobe + ssl-nginx smoke test.
-uprobe_full     Run full uprobe benchmark only.
-ssl_nginx_full  Run full ssl-nginx benchmark only.
-both_full       Run full uprobe and full ssl-nginx as separate jobs.
+ARM64 Smoke           uprobe_test_iter=10000, ssl_sizes=1kb
+ARM64 Uprobe Full     uprobe_iter=10, uprobe_test_iter=100000
+ARM64 SSL-nginx Full  ssl_sizes=16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb
 ```
 
-Useful manual inputs:
-
-```text
-uprobe_iter       Default full value: 10
-uprobe_test_iter  Default full value: 100000
-ssl_sizes         Default full value: 16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb
-```
-
-Leave these inputs empty to use the default value for the selected target. For `smoke`, the default is `uprobe_test_iter=10000` and `ssl_sizes=1kb`.
-
-Each job uploads a result artifact containing the output directory, logs, copied benchmark result files, and a `.tar.gz` archive.
+Each workflow uploads a result artifact containing the output directory, logs, copied benchmark result files, and a `.tar.gz` archive.
 
 ## Benchmark Selection
 

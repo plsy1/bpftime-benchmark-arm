@@ -351,9 +351,31 @@ collect_outputs() {
   log "Collecting benchmark output files"
   (
     cd "$REPO"
-    find benchmark -maxdepth 4 -type f \
-      \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
-      -print
+    if [[ "$RUN_UPROBE" == "1" && -d benchmark/uprobe ]]; then
+      find benchmark/uprobe -maxdepth 4 -type f \
+        \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
+        -print
+    fi
+    if [[ "$RUN_SYSCALL" == "1" && -d benchmark/syscall ]]; then
+      find benchmark/syscall -maxdepth 4 -type f \
+        \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
+        -print
+    fi
+    if [[ "$RUN_SYSCOUNT" == "1" && -d benchmark/syscount-nginx ]]; then
+      find benchmark/syscount-nginx -maxdepth 4 -type f \
+        \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
+        -print
+    fi
+    if [[ "$RUN_SSL_NGINX" == "1" && -d benchmark/ssl-nginx ]]; then
+      find benchmark/ssl-nginx -maxdepth 4 -type f \
+        \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
+        -print
+    fi
+    if [[ "$RUN_MPK" == "1" && -d benchmark/mpk ]]; then
+      find benchmark/mpk -maxdepth 4 -type f \
+        \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
+        -print
+    fi
   ) >"$OUT/benchmark-files.txt" 2>/dev/null || true
 
   while IFS= read -r f; do

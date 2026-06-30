@@ -55,10 +55,18 @@ perf.data.old
 /wasm-micro-runtime
 benchmark-logs-error.txt
 
+# Benchmark output artifacts
+benchmark-results*/
+benchmark-results*.tar.gz
+benchmark/**/benchmark-logs*.txt
+benchmark/**/absolute_performance*.png
+benchmark/**/benchmark_chart.png
+benchmark/**/reports.md
+benchmark/**/results.md
+
 # Embedded git repositories
 example/attach_implementation/benchmark/luajit_plugin/luajit-local/
 example/attach_implementation/benchmark/wasm-micro-runtime/
 
 build
 target
-

@@ -52,6 +52,8 @@ jobs:
             nginx \
             pkg-config \
             python3 \
+            python3-matplotlib \
+            python3-numpy \
             systemtap-sdt-dev \
             wrk \
             zlib1g-dev

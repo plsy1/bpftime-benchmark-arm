@@ -80,11 +80,12 @@ For the full uprobe + ssl-nginx run:
 
 ## GitHub Actions
 
-The repository provides three manually triggered ARM64 workflows:
+The repository provides four manually triggered ARM64 workflows:
 
 ```text
 Actions -> ARM64 Smoke -> Run workflow
 Actions -> ARM64 Uprobe Full -> Run workflow
+Actions -> ARM64 Syscount-nginx Full -> Run workflow
 Actions -> ARM64 SSL-nginx Full -> Run workflow
 ```
 
@@ -93,6 +94,7 @@ Workflow defaults:
 ```text
 ARM64 Smoke           uprobe_test_iter=10000, ssl_sizes=1kb
 ARM64 Uprobe Full     uprobe_iter=10, uprobe_test_iter=100000
+ARM64 Syscount-nginx Full
 ARM64 SSL-nginx Full  ssl_sizes=16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb
 ```
 

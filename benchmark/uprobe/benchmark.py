@@ -25,7 +25,7 @@ def log_message(msg: str):
     """Log a message with timestamp to both console and log collection"""
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
     formatted_msg = f"[{timestamp}] {msg}"
-    print(formatted_msg)
+    print(formatted_msg, flush=True)
     benchmark_logs.append(formatted_msg)
 
 def parse_victim_output(v: str) -> dict:
@@ -64,9 +64,9 @@ async def handle_stdout(
             item.cancel()
         if t2 in done:
             s = t2.result().decode()
-            if not s:  # Skip empty lines
-                continue
-            print(f"{title}: {s}", end="")
+            if not s:
+                break
+            print(f"{title}: {s}", end="", flush=True)
             if log_output:
                 output_lines.append(f"{title}: {s.strip()}")
             if callback:
@@ -172,7 +172,8 @@ async def run_userspace_uprobe_test(num_runs=10):
     should_exit.set()
     await server_stdout_task
     log_message("Terminating server")
-    server.kill()
+    if server.returncode is None:
+        server.kill()
     await server.communicate()
     
     processed_result = handle_result(result)
@@ -240,7 +241,8 @@ async def run_kernel_uprobe_test(num_runs=10):
     should_exit.set()
     await server_stdout_task
     log_message("Terminating kernel uprobe server")
-    server.kill()
+    if server.returncode is None:
+        server.kill()
     await server.communicate()
     
     processed_result = handle_result(result)

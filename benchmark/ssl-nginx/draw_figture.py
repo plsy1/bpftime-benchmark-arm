@@ -28,7 +28,7 @@ if size_filter:
     SIZES = {name: all_sizes[name] for name in requested_sizes if name in all_sizes}
     missing_sizes = [name for name in requested_sizes if name not in all_sizes]
     if missing_sizes:
-        print(f"Ignoring unknown sizes from SSL_NGINX_SIZES: {', '.join(missing_sizes)}")
+        print(f"Ignoring unknown sizes from SSL_NGINX_SIZES: {', '.join(missing_sizes)}", flush=True)
 
 BENCHMARK_CMD = ["python3", "benchmark/ssl-nginx/benchmark.py"]
 OUTPUT_DIR = "benchmark/ssl-nginx"
@@ -38,11 +38,11 @@ def create_dir_if_not_exists(dir_path):
     """Create directory if it doesn't exist"""
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
-        print(f"Created directory: {dir_path}")
+        print(f"Created directory: {dir_path}", flush=True)
 
 def generate_test_file(size_name, size_bytes):
     """Generate a single HTML test file with the specified size"""
-    print(f"Generating test file of size {size_name}...")
+    print(f"Generating test file of size {size_name}...", flush=True)
     
     # Create HTML content
     html_start = "<html>"
@@ -61,11 +61,11 @@ def generate_test_file(size_name, size_bytes):
         f.write(html_start + content + html_end)
     
     actual_size = os.path.getsize(INDEX_HTML_PATH)
-    print(f"  Created {INDEX_HTML_PATH} ({actual_size} bytes)")
+    print(f"  Created {INDEX_HTML_PATH} ({actual_size} bytes)", flush=True)
 
 def run_benchmark(size_name, size_bytes):
     """Run the benchmark for a specific file size"""
-    print(f"\n=== Running benchmark for {size_name} file ===")
+    print(f"\n=== Running benchmark for {size_name} file ===", flush=True)
     
     # Generate the test file
     generate_test_file(size_name, size_bytes)
@@ -75,9 +75,9 @@ def run_benchmark(size_name, size_bytes):
     
     # Extract results
     output = result.stdout
-    print(output)
+    print(output, flush=True)
     if result.stderr:
-        print(result.stderr)
+        print(result.stderr, flush=True)
     
     inner_result_path = None
     inner_stats = {}
@@ -93,7 +93,7 @@ def run_benchmark(size_name, size_bytes):
             inner_config = inner_data.get("config", {})
             inner_results = inner_data.get("results", {})
         except Exception as e:
-            print(f"Failed to load inner result JSON {inner_result_path}: {e}")
+            print(f"Failed to load inner result JSON {inner_result_path}: {e}", flush=True)
 
     # Parse results. Prefer the structured JSON emitted by benchmark.py because
     # the human-readable output may include extra diagnostics between lines.
@@ -190,7 +190,7 @@ def save_results(all_results):
                 f.write("\n\n--- stderr ---\n")
                 f.write(result["stderr"])
     
-    print(f"\nResults saved to {json_path} and {txt_path}")
+    print(f"\nResults saved to {json_path} and {txt_path}", flush=True)
     return json_path, txt_path
 
 def plot_results(all_results, output_dir):

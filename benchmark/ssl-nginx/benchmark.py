@@ -76,7 +76,7 @@ signal.signal(signal.SIGTERM, signal_handler)
 def debug_print(message):
     """Print debug messages with timestamp"""
     timestamp = datetime.now().strftime("%H:%M:%S")
-    print(f"[DEBUG {timestamp}] {message}")
+    print(f"[DEBUG {timestamp}] {message}", flush=True)
 
 def mark_valid(test_name):
     run_stats[test_name]["valid_runs"] += 1

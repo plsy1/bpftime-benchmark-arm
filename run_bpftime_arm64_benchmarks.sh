@@ -54,6 +54,9 @@ Options:
   --run-mpk                 Run MPK benchmark. Default: skipped.
   --output-dir DIR          Output directory. Default: repo/benchmark-results-arm64-TIMESTAMP.
   --llvm-dir DIR            LLVM CMake directory. If not set, auto-detect with llvm-config.
+  --install-deps            Install native ARM64 Ubuntu dependencies with apt-get before running.
+                            Default: only check dependencies and print warnings.
+  --no-check-deps           Skip dependency checks.
   -h, --help                Show this help message.
 
 Examples:
@@ -96,7 +99,11 @@ USER_SSL_NGINX_SIZES="${SSL_NGINX_SIZES:-}"
 USER_UPROBE_ITER="${UPROBE_ITER:-}"
 USER_UPROBE_TEST_ITER="${UPROBE_TEST_ITER:-}"
 USER_LLVM_DIR="${LLVM_DIR:-}"
+INSTALL_DEPS="${INSTALL_DEPS:-0}"
+CHECK_DEPS="${CHECK_DEPS:-1}"
 FAILURES=0
+ONLY_BENCH=""
+AUTO_SKIPPED_ARM64_SYSCALL=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -172,6 +179,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --only)
       only="${2:?missing value for --only}"
+      ONLY_BENCH="$only"
       RUN_UPROBE=0
       RUN_SYSCALL=0
       RUN_SYSCOUNT=0
@@ -189,6 +197,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     --only=*)
       only="${1#*=}"
+      ONLY_BENCH="$only"
       RUN_UPROBE=0
       RUN_SYSCALL=0
       RUN_SYSCOUNT=0
@@ -238,6 +247,15 @@ while [[ $# -gt 0 ]]; do
       ;;
     --llvm-dir=*)
       USER_LLVM_DIR="${1#*=}"
+      shift
+      ;;
+    --install-deps)
+      INSTALL_DEPS=1
+      CHECK_DEPS=1
+      shift
+      ;;
+    --no-check-deps)
+      CHECK_DEPS=0
       shift
       ;;
     -h|--help)
@@ -318,6 +336,11 @@ else
   SSL_NGINX_SIZES="${USER_SSL_NGINX_SIZES:-16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb}"
 fi
 
+if [[ "$(uname -m)" == "aarch64" && "$RUN_SYSCALL" == "1" && "$ONLY_BENCH" != "syscall" ]]; then
+  RUN_SYSCALL=0
+  AUTO_SKIPPED_ARM64_SYSCALL=1
+fi
+
 mkdir -p "$OUT"
 
 log() {
@@ -393,6 +416,86 @@ prepare_compat_paths() {
     ln -sf ../../tracing/syscount/syscount "$REPO/example/libbpf-tools/syscount/syscount"
     log "Created compatibility symlink for syscount"
   fi
+}
+
+APT_DEPENDENCIES=(
+  autoconf
+  automake
+  binutils-dev
+  build-essential
+  ca-certificates
+  clang
+  cmake
+  curl
+  git
+  libboost-all-dev
+  libcrypt-dev
+  libelf-dev
+  libfuse-dev
+  libncurses-dev
+  libpcre2-dev
+  libssl-dev
+  libtool
+  libyaml-cpp-dev
+  llvm
+  llvm-dev
+  nginx
+  pkg-config
+  python3
+  python3-matplotlib
+  python3-numpy
+  python3-pip
+  systemtap-sdt-dev
+  wrk
+  zlib1g-dev
+)
+
+REQUIRED_TOOLS=(
+  cmake
+  make
+  ninja
+  clang
+  gcc
+  g++
+  python3
+  sudo
+  git
+  curl
+  llvm-objcopy
+  nginx
+  wrk
+)
+
+missing_required_tools() {
+  local cmd
+  for cmd in "${REQUIRED_TOOLS[@]}"; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+      echo "$cmd"
+    fi
+  done
+}
+
+install_native_deps() {
+  if ! command -v apt-get >/dev/null 2>&1; then
+    log "ERROR: --install-deps requires apt-get; install dependencies manually on this system"
+    return 1
+  fi
+
+  log "Installing native ARM64 benchmark dependencies with apt-get"
+  sudo apt-get update >>"$OUT/run.log" 2>&1
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "${APT_DEPENDENCIES[@]}" >>"$OUT/run.log" 2>&1
+}
+
+check_native_deps() {
+  local missing
+  missing="$(missing_required_tools | paste -sd ' ' -)"
+  if [[ -n "$missing" ]]; then
+    log "WARNING: missing required tools: $missing"
+    log "Install dependencies with: $0 --install-deps [other options]"
+    return 1
+  fi
+  log "Required benchmark tools are available"
+  return 0
 }
 
 prepare_third_party_deps() {
@@ -487,6 +590,9 @@ log "Repository: $REPO"
 log "Output: $OUT"
 log "Mode: $MODE"
 log "Run build: $RUN_BUILD"
+if [[ "$AUTO_SKIPPED_ARM64_SYSCALL" == "1" ]]; then
+  log "Skipping syscall benchmark on AArch64 because the userspace syscall trampoline is not implemented"
+fi
 log "Selected benchmarks: uprobe=$RUN_UPROBE syscall=$RUN_SYSCALL syscount-nginx=$RUN_SYSCOUNT ssl-nginx=$RUN_SSL_NGINX mpk=$RUN_MPK"
 log "UPROBE_ITER: $UPROBE_ITER"
 log "UPROBE_TEST_ITER: $UPROBE_TEST_ITER"
@@ -519,8 +625,19 @@ log "Git information"
   git status --short 2>/dev/null || true
 ) | tee "$OUT/git-info.txt" | tee -a "$OUT/run.log" >/dev/null
 
+if [[ "$INSTALL_DEPS" == "1" ]]; then
+  if ! install_native_deps; then
+    log "Dependency installation failed; continuing so logs can be collected"
+    FAILURES=$((FAILURES + 1))
+  fi
+fi
+
+if [[ "$CHECK_DEPS" == "1" ]]; then
+  check_native_deps || true
+fi
+
 log "Tool availability"
-for cmd in cmake make ninja clang gcc g++ python3 sudo bpftool nginx wrk git; do
+for cmd in cmake make ninja clang gcc g++ python3 sudo bpftool nginx wrk git curl llvm-objcopy; do
   if command -v "$cmd" >/dev/null 2>&1; then
     echo "$cmd: $(command -v "$cmd")"
   else
@@ -600,6 +717,9 @@ prepare_compat_paths
 cleanup_bpftime
 
 if [[ "$RUN_UPROBE" == "1" ]]; then
+  if [[ ! -e /sys/kernel/btf/vmlinux ]]; then
+    log "Kernel BTF is missing at /sys/kernel/btf/vmlinux; benchmark/uprobe strips .BTF.ext so kernel uprobe can still run"
+  fi
   run_step uprobe python3 benchmark/uprobe/benchmark.py --iter "$UPROBE_ITER" --test-iter "$UPROBE_TEST_ITER"
   cleanup_bpftime
 fi

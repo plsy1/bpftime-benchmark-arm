@@ -17,7 +17,7 @@ On a native ARM64 Ubuntu machine, run:
 ```bash
 wget https://raw.githubusercontent.com/plsy1/bpftime-benchmark-arm/main/run_bpftime_arm64_benchmarks.sh
 chmod +x run_bpftime_arm64_benchmarks.sh
-./run_bpftime_arm64_benchmarks.sh --clone
+./run_bpftime_arm64_benchmarks.sh --install-deps --clone
 ```
 
 This will:
@@ -25,8 +25,44 @@ This will:
 - clone `https://github.com/plsy1/bpftime-benchmark-arm.git`
 - build bpftime and the benchmark targets
 - run the main benchmark set
+- skip `syscall` automatically on AArch64 unless `--only syscall` is used
 - skip MPK by default
 - collect logs and results into a `.tar.gz` archive
+
+## Native ARM64 Dependencies
+
+On a fresh Jetson/ARM64 Ubuntu system, install the system dependencies first:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y \
+  autoconf automake binutils-dev build-essential ca-certificates \
+  clang cmake curl git libboost-all-dev libcrypt-dev libelf-dev \
+  libfuse-dev libncurses-dev libpcre2-dev libssl-dev libtool \
+  libyaml-cpp-dev llvm llvm-dev nginx pkg-config python3 \
+  python3-matplotlib python3-numpy python3-pip systemtap-sdt-dev \
+  wrk zlib1g-dev
+```
+
+If the FUSE benchmark dependencies are needed, install the Python helper too:
+
+```bash
+python3 -m pip install --user fusepy
+```
+
+The uprobe benchmark uses `llvm-objcopy` to strip `.BTF.ext` from its BPF
+object, so it can run the simple kernel uprobe baseline on Jetson kernels that
+do not expose `/sys/kernel/btf/vmlinux`. The `llvm` package above provides that
+tool.
+
+The runner can install the apt dependencies for you:
+
+```bash
+./run_bpftime_arm64_benchmarks.sh --install-deps --build /path/to/bpftime-benchmark-arm
+```
+
+Without `--install-deps`, the runner only checks for required tools and writes
+warnings to `run.log`; it does not change the machine.
 
 ## Run from an Existing Repository
 
@@ -192,6 +228,8 @@ The output includes:
 --run-mpk                 Run MPK benchmark.
 --output-dir DIR          Output directory.
 --llvm-dir DIR            LLVM CMake directory used by CMake.
+--install-deps            Install native ARM64 Ubuntu dependencies with apt-get.
+--no-check-deps           Skip dependency checks.
 -h, --help                Show help.
 ```
 
@@ -205,7 +243,8 @@ Full help:
 
 - The script is intended for native ARM64 Ubuntu.
 - MPK is skipped by default.
-- `syscall` bpftime userspace tracing may fail on AArch64 if the syscall trampoline support is still incomplete.
+- `syscall` bpftime userspace tracing is skipped by default on AArch64 because the syscall trampoline support is still incomplete. Use `--only syscall` to run it explicitly for debugging.
+- `uprobe` strips `.BTF.ext` from its BPF object so the kernel uprobe baseline can run on Jetson kernels without runtime kernel BTF.
 - The script continues after individual benchmark failures and still collects logs.
 - If `--clone` is used, build is enabled by default. Use `--no-build` to disable it.
 - The repository contains compatibility changes for newer LLVM/GCC toolchains. The runner script does not require LLVM 15 specifically; it auto-detects the installed LLVM CMake directory.

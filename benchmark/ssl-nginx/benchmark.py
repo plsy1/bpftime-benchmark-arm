@@ -19,6 +19,7 @@ WRK_DURATION = os.environ.get("SSL_NGINX_WRK_DURATION", "10")
 WRK_TIMEOUT = int(os.environ.get("SSL_NGINX_WRK_TIMEOUT", "15"))
 BPFTIME_RETRIES = int(os.environ.get("SSL_NGINX_BPFTIME_RETRIES", "0"))
 READY_TIMEOUT = int(os.environ.get("SSL_NGINX_READY_TIMEOUT", "10"))
+STRICT_TRACE_ERRORS = os.environ.get("SSL_NGINX_STRICT_TRACE_ERRORS", "").lower() in ("1", "true", "yes", "on")
 WRK_CMD = ["wrk", "https://127.0.0.1:4043/index.html", "-c", WRK_CONNECTIONS, "-d", WRK_DURATION]
 NGINX_CMD = ["nginx", "-c", "nginx.conf", "-p", "benchmark/ssl-nginx"]
 TEST_URL = "https://127.0.0.1:4043/index.html"
@@ -56,6 +57,7 @@ run_stats = {
         "parse_failures": 0,
         "wrk_failures": 0,
         "attach_failures": 0,
+        "trace_warnings": 0,
         "exceptions": 0,
     },
     "bpftime_sslsniff": {
@@ -67,6 +69,7 @@ run_stats = {
         "wrk_failures": 0,
         "readiness_failures": 0,
         "attach_failures": 0,
+        "trace_warnings": 0,
         "retry_attempts": 0,
         "exceptions": 0,
     },
@@ -98,6 +101,10 @@ def mark_failed(test_name, reason):
     if reason in run_stats[test_name]:
         run_stats[test_name][reason] += 1
 
+def mark_trace_warnings(test_name, summary):
+    if summary["warning_markers"] and "trace_warnings" in run_stats[test_name]:
+        run_stats[test_name]["trace_warnings"] += 1
+
 def open_trace_logs(test_name, run_index, attempt=None):
     TRACE_LOG_ROOT.mkdir(parents=True, exist_ok=True)
     suffix = f"run{run_index + 1:02d}"
@@ -120,16 +127,24 @@ def summarize_trace_log(test_name, run_index, stdout_path, stderr_path, returnco
         marker for marker in ("OpenSSL path:", "GnuTLS path:", "NSS path:")
         if marker in stdout_text
     ]
-    error_markers = [
+    hard_error_markers = [
         marker for marker in (
             "no program attached",
             "failed to open perf buffer",
-            "error polling perf buffer",
             "ERROR:",
             "Error:",
         )
         if marker in stdout_text or marker in stderr_text
     ]
+    warning_markers = [
+        marker for marker in (
+            "error polling perf buffer",
+        )
+        if marker in stdout_text or marker in stderr_text
+    ]
+    attach_success = bool(attach_markers) and not hard_error_markers
+    if STRICT_TRACE_ERRORS and warning_markers:
+        attach_success = False
     summary = {
         "run": run_index + 1,
         "stdout_path": str(stdout_path),
@@ -138,8 +153,10 @@ def summarize_trace_log(test_name, run_index, stdout_path, stderr_path, returnco
         "event_count": len(event_lines),
         "attach_markers": attach_markers,
         "attach_started": bool(attach_markers),
-        "attach_success": bool(attach_markers) and not error_markers,
-        "error_markers": error_markers,
+        "attach_success": attach_success,
+        "error_markers": hard_error_markers + warning_markers,
+        "hard_error_markers": hard_error_markers,
+        "warning_markers": warning_markers,
         "stdout_bytes": stdout_path.stat().st_size if stdout_path.exists() else 0,
         "stderr_bytes": stderr_path.stat().st_size if stderr_path.exists() else 0,
     }
@@ -170,6 +187,9 @@ def terminate_and_summarize_trace(test_name, run_index, proc, stdout_path, stder
 
 def trace_is_effective(summary):
     return summary["attach_success"] and summary["event_count"] > 0
+
+def trace_has_only_warnings(summary):
+    return summary["warning_markers"] and not summary["hard_error_markers"]
 
 def remove_access_log():
     """Remove the nginx access log file"""
@@ -517,6 +537,12 @@ def run_kernel_sslsniff():
                     )
                     if req_per_sec:
                         if trace_is_effective(summary):
+                            mark_trace_warnings("kernel_sslsniff", summary)
+                            if trace_has_only_warnings(summary):
+                                debug_print(
+                                    "kernel sslsniff produced SSL events with trace warnings; "
+                                    "run is counted"
+                                )
                             results["kernel_sslsniff"].append(req_per_sec)
                             mark_valid("kernel_sslsniff")
                             print(f"  Requests/sec: {req_per_sec:.2f}")
@@ -655,6 +681,12 @@ def run_bpftime_sslsniff():
                     )
                     if req_per_sec:
                         if trace_is_effective(summary):
+                            mark_trace_warnings("bpftime_sslsniff", summary)
+                            if trace_has_only_warnings(summary):
+                                debug_print(
+                                    "bpftime sslsniff produced SSL events with trace warnings; "
+                                    "run is counted"
+                                )
                             results["bpftime_sslsniff"].append(req_per_sec)
                             mark_valid("bpftime_sslsniff")
                             print(f"  Requests/sec: {req_per_sec:.2f}")
@@ -703,6 +735,8 @@ def print_statistics():
             print(f"  Failure breakdown:     {', '.join(breakdown)}")
         if stats.get("retry_attempts", 0):
             print(f"  Retry attempts:        {stats['retry_attempts']}")
+        if stats.get("trace_warnings", 0):
+            print(f"  Trace warnings:        {stats['trace_warnings']}")
         if not values:
             print("  No valid results")
             continue
@@ -746,9 +780,10 @@ def print_statistics():
             continue
         total_events = sum(item["event_count"] for item in summaries)
         attach_ok = sum(1 for item in summaries if item["attach_success"])
+        warning_count = sum(1 for item in summaries if item["warning_markers"])
         print(
             f"  {test_name}: attach_success={attach_ok}/{len(summaries)} "
-            f"events={total_events} logs={TRACE_LOG_ROOT}"
+            f"events={total_events} warnings={warning_count} logs={TRACE_LOG_ROOT}"
         )
 
 def save_results():
@@ -765,6 +800,7 @@ def save_results():
                 "wrk_timeout": WRK_TIMEOUT,
                 "ready_timeout": READY_TIMEOUT,
                 "bpftime_retries": BPFTIME_RETRIES,
+                "strict_trace_errors": STRICT_TRACE_ERRORS,
                 "sslsniff_args": SSLSNIFF_ARGS,
                 "trace_log_root": str(TRACE_LOG_ROOT),
             },

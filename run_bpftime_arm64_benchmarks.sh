@@ -50,6 +50,10 @@ Options:
                             Extra arguments passed to sslsniff. On AArch64 the default
                             is "--no-gnutls --no-nss -c nginx" unless
                             SSL_NGINX_SSLSNIFF_ARGS is already set.
+  --strict-ssl-nginx-trace-errors
+                            Treat sslsniff trace warnings, such as perf polling
+                            errors after SSL events were observed, as benchmark
+                            failures. Default: off.
   --only NAME               Run only one benchmark: uprobe, syscall, syscount, ssl-nginx, mpk.
   --skip-uprobe             Skip uprobe benchmark.
   --skip-syscall            Skip syscall benchmark.
@@ -101,6 +105,7 @@ RUN_SSL_NGINX="${RUN_SSL_NGINX:-1}"
 RUN_MPK="${RUN_MPK:-0}"
 USER_SSL_NGINX_SIZES="${SSL_NGINX_SIZES:-}"
 USER_SSL_NGINX_SSLSNIFF_ARGS="${SSL_NGINX_SSLSNIFF_ARGS-}"
+SSL_NGINX_STRICT_TRACE_ERRORS="${SSL_NGINX_STRICT_TRACE_ERRORS:-0}"
 SSL_NGINX_SSLSNIFF_ARGS_IS_SET=0
 if [[ -v SSL_NGINX_SSLSNIFF_ARGS ]]; then
   SSL_NGINX_SSLSNIFF_ARGS_IS_SET=1
@@ -248,6 +253,10 @@ while [[ $# -gt 0 ]]; do
       RUN_SSL_NGINX=0
       shift
       ;;
+    --strict-ssl-nginx-trace-errors)
+      SSL_NGINX_STRICT_TRACE_ERRORS=1
+      shift
+      ;;
     --run-mpk)
       RUN_MPK=1
       shift
@@ -361,6 +370,7 @@ if [[ "$(uname -m)" == "aarch64" && "$RUN_SSL_NGINX" == "1" && "$SSL_NGINX_SSLSN
 fi
 SSL_NGINX_SSLSNIFF_ARGS="$USER_SSL_NGINX_SSLSNIFF_ARGS"
 export SSL_NGINX_SSLSNIFF_ARGS
+export SSL_NGINX_STRICT_TRACE_ERRORS
 
 if [[ "$(uname -m)" == "aarch64" && "$RUN_SYSCALL" == "1" && "$ONLY_BENCH" != "syscall" ]]; then
   RUN_SYSCALL=0
@@ -417,12 +427,15 @@ collect_outputs() {
       find benchmark/syscount-nginx -maxdepth 4 -type f \
         \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
         -newer "$RUN_MARKER" \
+        ! -name "access.log" \
         -print
     fi
     if [[ "$RUN_SSL_NGINX" == "1" && -d benchmark/ssl-nginx ]]; then
       find benchmark/ssl-nginx -maxdepth 4 -type f \
         \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
         -newer "$RUN_MARKER" \
+        ! -name "access.log" \
+        ! -path "*/trace_logs/*.stdout.log" \
         -print
     fi
     if [[ "$RUN_MPK" == "1" && -d benchmark/mpk ]]; then
@@ -630,6 +643,7 @@ log "UPROBE_ITER: $UPROBE_ITER"
 log "UPROBE_TEST_ITER: $UPROBE_TEST_ITER"
 log "SSL_NGINX_SIZES: $SSL_NGINX_SIZES"
 log "SSL_NGINX_SSLSNIFF_ARGS: ${SSL_NGINX_SSLSNIFF_ARGS:-<default sslsniff args>}"
+log "SSL_NGINX_STRICT_TRACE_ERRORS: $SSL_NGINX_STRICT_TRACE_ERRORS"
 
 if [[ ! -d "$REPO" ]]; then
   log "ERROR: repository path does not exist: $REPO"
@@ -768,7 +782,7 @@ if [[ "$RUN_SYSCOUNT" == "1" ]]; then
 fi
 
 if [[ "$RUN_SSL_NGINX" == "1" ]]; then
-  run_step ssl_nginx env SSL_NGINX_SIZES="$SSL_NGINX_SIZES" SSL_NGINX_SSLSNIFF_ARGS="$SSL_NGINX_SSLSNIFF_ARGS" python3 benchmark/ssl-nginx/draw_figture.py
+  run_step ssl_nginx env SSL_NGINX_SIZES="$SSL_NGINX_SIZES" SSL_NGINX_SSLSNIFF_ARGS="$SSL_NGINX_SSLSNIFF_ARGS" SSL_NGINX_STRICT_TRACE_ERRORS="$SSL_NGINX_STRICT_TRACE_ERRORS" python3 benchmark/ssl-nginx/draw_figture.py
   cleanup_bpftime
 fi
 

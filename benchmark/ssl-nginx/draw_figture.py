@@ -143,8 +143,8 @@ def save_results(all_results):
         f.write(f"File Size Benchmark Results - {timestamp}\n\n")
         
         # Table header
-        f.write(f"{'Size':<10} {'Baseline':<15} {'Kernel':<15} {'BPFtime':<15} {'Kernel Impact':<15} {'BPFtime Impact':<15} {'Samples (B/K/U)':<18} {'Failed (B/K/U)':<18}\n")
-        f.write("-" * 125 + "\n")
+        f.write(f"{'Size':<10} {'Baseline':<15} {'Kernel':<15} {'BPFtime':<15} {'Kernel Impact':<15} {'BPFtime Impact':<15} {'Samples (B/K/U)':<18} {'Failed (B/K/U)':<18} {'Warnings (B/K/U)':<18}\n")
+        f.write("-" * 145 + "\n")
         
         # Table data
         for result in all_results:
@@ -167,6 +167,7 @@ def save_results(all_results):
 
             sample_parts = []
             failed_parts = []
+            warning_parts = []
             labels = [
                 ("B", "baseline"),
                 ("K", "kernel_sslsniff"),
@@ -176,10 +177,12 @@ def save_results(all_results):
                 stat = stats.get(key, {})
                 sample_parts.append(f"{label}:{stat.get('valid_runs', 'N/A')}/{stat.get('target_runs', 'N/A')}")
                 failed_parts.append(f"{label}:{stat.get('failed_attempts', 'N/A')}")
+                warning_parts.append(f"{label}:{stat.get('trace_warnings', 'N/A')}")
             samples_str = " ".join(sample_parts)
             failed_str = " ".join(failed_parts)
+            warnings_str = " ".join(warning_parts)
             
-            f.write(f"{size:<10} {baseline_str:<15} {kernel_str:<15} {bpftime_str:<15} {kernel_impact_str:<15} {bpftime_impact_str:<15} {samples_str:<18} {failed_str:<18}\n")
+            f.write(f"{size:<10} {baseline_str:<15} {kernel_str:<15} {bpftime_str:<15} {kernel_impact_str:<15} {bpftime_impact_str:<15} {samples_str:<18} {failed_str:<18} {warnings_str:<18}\n")
         
         # Add raw output
         f.write("\n\nRaw output for each test:\n")

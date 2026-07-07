@@ -178,9 +178,19 @@ The `ssl-nginx` benchmark script in this repository includes reliability fixes:
 
 - waits for bpftime-instrumented nginx readiness
 - records `wrk` return code and stderr
+- records sslsniff stdout/stderr trace logs
+- verifies that sslsniff attaches and observes SSL events
 - supports bpftime retries
 - supports `SSL_NGINX_SIZES`
+- records perf polling trace warnings without failing the throughput run by default
+- excludes nginx `access.log` and large trace stdout payload logs from the final archive
 - avoids treating empty `wrk` output as a valid sample
+
+To make sslsniff trace warnings fail the benchmark, use:
+
+```bash
+./run_bpftime_arm64_benchmarks.sh --clone --only ssl-nginx --strict-ssl-nginx-trace-errors
+```
 
 ## Output
 

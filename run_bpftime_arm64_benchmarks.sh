@@ -659,6 +659,7 @@ log "UPROBE_TEST_ITER: $UPROBE_TEST_ITER"
 log "SSL_NGINX_SIZES: $SSL_NGINX_SIZES"
 log "SSL_NGINX_SSLSNIFF_ARGS: ${SSL_NGINX_SSLSNIFF_ARGS:-<default sslsniff args>}"
 log "SSL_NGINX_STRICT_TRACE_ERRORS: $SSL_NGINX_STRICT_TRACE_ERRORS"
+log "SYSCOUNT_NGINX_BIN: ${SYSCOUNT_NGINX_BIN:-nginx}"
 
 if [[ ! -d "$REPO" ]]; then
   log "ERROR: repository path does not exist: $REPO"

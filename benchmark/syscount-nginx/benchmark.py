@@ -26,7 +26,8 @@ SYSCOUNT_TIMEOUT = int(os.environ.get("SYSCOUNT_NGINX_TIMEOUT", str(int(SYSCOUNT
 SYSCOUNT_STARTUP_DELAY = float(os.environ.get("SYSCOUNT_NGINX_STARTUP_DELAY", "2"))
 ALLOW_MISSING_USERBPF = os.environ.get("SYSCOUNT_NGINX_ALLOW_MISSING_USERBPF", "").lower() in ("1", "true", "yes", "on")
 WRK_CMD = ["wrk", f"http://127.0.0.1:{NGINX_PORT}/index.html", "-c", WRK_CONNECTIONS, "-d", WRK_DURATION]
-NGINX_CMD = ["nginx", "-c", "nginx.conf", "-p", "benchmark/syscount-nginx"]
+NGINX_BIN = os.environ.get("SYSCOUNT_NGINX_BIN", "nginx")
+NGINX_CMD = [NGINX_BIN, "-c", "nginx.conf", "-p", "benchmark/syscount-nginx"]
 TEST_URL = f"http://127.0.0.1:{NGINX_PORT}/index.html"
 SYSCOUNT_PATH = "example/tracing/syscount/syscount"
 AGENT_PATH = "build/runtime/agent/libbpftime-agent.so"
@@ -213,6 +214,11 @@ def check_file_exists(path):
 def check_command_exists(cmd):
     """Check if a command exists in PATH"""
     try:
+        if os.path.sep in cmd:
+            exists = os.path.isfile(cmd) and os.access(cmd, os.X_OK)
+            debug_print(f"Checking command path: {cmd} - {'EXISTS' if exists else 'NOT FOUND'}")
+            return exists
+
         result = subprocess.run(["which", cmd], capture_output=True, text=True)
         exists = result.returncode == 0
         debug_print(f"Checking command: {cmd} - {'EXISTS' if exists else 'NOT FOUND'}")
@@ -221,7 +227,7 @@ def check_command_exists(cmd):
             debug_print(f"  Path: {result.stdout.strip()}")
         else:
             # For nginx, check common locations
-            if cmd == "nginx":
+            if cmd == NGINX_BIN:
                 common_paths = [
                     "/usr/sbin/nginx", 
                     "/usr/local/sbin/nginx",
@@ -324,7 +330,7 @@ def start_nginx():
     remove_access_log()  # Remove access log before starting nginx
     
     # Check if nginx exists
-    check_command_exists("nginx")
+    check_command_exists(NGINX_BIN)
     
     # Check current directory
     debug_print(f"Current directory: {os.getcwd()}")
@@ -338,7 +344,7 @@ def start_nginx():
     # Start nginx with full path
     abs_nginx_conf = os.path.abspath(nginx_conf)
     abs_nginx_dir = os.path.dirname(abs_nginx_conf)
-    modified_nginx_cmd = ["nginx", "-c", abs_nginx_conf, "-p", abs_nginx_dir]
+    modified_nginx_cmd = [NGINX_BIN, "-c", abs_nginx_conf, "-p", abs_nginx_dir]
     debug_print(f"Starting nginx with command: {' '.join(modified_nginx_cmd)}")
     
     try:
@@ -581,7 +587,7 @@ def run_userbpf_syscount(target_pid=None):
             # Start nginx with full path
             abs_nginx_conf = os.path.abspath(nginx_conf)
             abs_nginx_dir = os.path.dirname(abs_nginx_conf)
-            modified_nginx_cmd = ["nginx", "-c", abs_nginx_conf, "-p", abs_nginx_dir]
+            modified_nginx_cmd = [NGINX_BIN, "-c", abs_nginx_conf, "-p", abs_nginx_dir]
 
             # Start syscount with bpftime first; the target agent opens shared
             # memory created by this loader process.
@@ -802,6 +808,7 @@ def save_results():
             "runs": NUM_RUNS,
             "config": {
                 "wrk_cmd": WRK_CMD,
+                "nginx_bin": NGINX_BIN,
                 "wrk_timeout": WRK_TIMEOUT,
                 "syscount_duration": SYSCOUNT_DURATION,
                 "syscount_timeout": SYSCOUNT_TIMEOUT,
@@ -1112,10 +1119,10 @@ def main():
         debug_print(f"Current working directory: {os.getcwd()}")
         
         # Check if nginx is installed
-        nginx_installed = check_command_exists("nginx")
+        nginx_installed = check_command_exists(NGINX_BIN)
         if not nginx_installed:
-            debug_print("ERROR: nginx command not found!")
-            debug_print("Please install nginx before running this benchmark.")
+            debug_print(f"ERROR: nginx command not found: {NGINX_BIN}")
+            debug_print("Please install nginx before running this benchmark or set SYSCOUNT_NGINX_BIN.")
             debug_print("On Ubuntu/Debian: sudo apt-get install nginx")
             debug_print("On CentOS/RHEL: sudo yum install nginx")
             return

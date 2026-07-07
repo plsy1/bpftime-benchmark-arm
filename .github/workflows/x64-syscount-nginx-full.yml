@@ -1,0 +1,40 @@
+name: X64 Syscount-nginx Full
+
+on:
+  workflow_dispatch:
+
+jobs:
+  syscount-nginx-full:
+    name: syscount-nginx full
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show runner information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+          llvm-config --version || true
+          clang --version || true
+
+      - name: Run syscount-nginx full benchmark
+        run: |
+          ./run_bpftime_arm64_benchmarks.sh \
+            --install-deps \
+            --build \
+            --mode full \
+            --only syscount-nginx \
+            --output-dir "$PWD/benchmark-results-x64-syscount-nginx-full"
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: x64-syscount-nginx-full-benchmark-results
+          path: |
+            benchmark-results-x64-syscount-nginx-full.tar.gz
+          if-no-files-found: warn

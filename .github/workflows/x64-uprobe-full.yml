@@ -1,0 +1,54 @@
+name: X64 Uprobe Full
+
+on:
+  workflow_dispatch:
+    inputs:
+      uprobe_iter:
+        description: "Outer iterations for uprobe"
+        required: false
+        default: "10"
+      uprobe_test_iter:
+        description: "Inner iterations for uprobe"
+        required: false
+        default: "100000"
+
+jobs:
+  uprobe-full:
+    name: uprobe full
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show runner information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+          llvm-config --version || true
+          clang --version || true
+
+      - name: Run uprobe full benchmark
+        env:
+          UPROBE_ITER: ${{ github.event.inputs.uprobe_iter || '10' }}
+          UPROBE_TEST_ITER: ${{ github.event.inputs.uprobe_test_iter || '100000' }}
+        run: |
+          ./run_bpftime_arm64_benchmarks.sh \
+            --install-deps \
+            --build \
+            --mode full \
+            --only uprobe \
+            --uprobe-iter "$UPROBE_ITER" \
+            --uprobe-test-iter "$UPROBE_TEST_ITER" \
+            --output-dir "$PWD/benchmark-results-x64-uprobe-full"
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: x64-uprobe-full-benchmark-results
+          path: |
+            benchmark-results-x64-uprobe-full.tar.gz
+          if-no-files-found: warn

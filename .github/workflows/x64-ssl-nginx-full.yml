@@ -1,0 +1,48 @@
+name: X64 SSL-nginx Full
+
+on:
+  workflow_dispatch:
+    inputs:
+      ssl_sizes:
+        description: "Comma-separated ssl-nginx payload sizes"
+        required: false
+        default: "16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb"
+
+jobs:
+  ssl-nginx-full:
+    name: ssl-nginx full
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show runner information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+          llvm-config --version || true
+          clang --version || true
+
+      - name: Run ssl-nginx full benchmark
+        env:
+          SSL_SIZES: ${{ github.event.inputs.ssl_sizes || '16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb' }}
+        run: |
+          ./run_bpftime_arm64_benchmarks.sh \
+            --install-deps \
+            --build \
+            --mode full \
+            --only ssl-nginx \
+            --ssl-sizes "$SSL_SIZES" \
+            --output-dir "$PWD/benchmark-results-x64-ssl-nginx-full"
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: x64-ssl-nginx-full-benchmark-results
+          path: |
+            benchmark-results-x64-ssl-nginx-full.tar.gz
+          if-no-files-found: warn

@@ -204,6 +204,15 @@ def remove_access_log():
     except Exception as e:
         debug_print(f"Error removing access log: {e}")
 
+def prepare_nginx_prefix(nginx_dir):
+    """Create directories expected by source-built nginx when -p is used."""
+    logs_dir = os.path.join(nginx_dir, "logs")
+    try:
+        os.makedirs(logs_dir, exist_ok=True)
+        debug_print(f"Ensured nginx logs directory exists: {logs_dir}")
+    except Exception as e:
+        debug_print(f"Error creating nginx logs directory {logs_dir}: {e}")
+
 def check_file_exists(path):
     """Check if a file exists and print its absolute path"""
     abs_path = os.path.abspath(path)
@@ -344,6 +353,7 @@ def start_nginx():
     # Start nginx with full path
     abs_nginx_conf = os.path.abspath(nginx_conf)
     abs_nginx_dir = os.path.dirname(abs_nginx_conf)
+    prepare_nginx_prefix(abs_nginx_dir)
     modified_nginx_cmd = [NGINX_BIN, "-c", abs_nginx_conf, "-p", abs_nginx_dir]
     debug_print(f"Starting nginx with command: {' '.join(modified_nginx_cmd)}")
     
@@ -587,6 +597,7 @@ def run_userbpf_syscount(target_pid=None):
             # Start nginx with full path
             abs_nginx_conf = os.path.abspath(nginx_conf)
             abs_nginx_dir = os.path.dirname(abs_nginx_conf)
+            prepare_nginx_prefix(abs_nginx_dir)
             modified_nginx_cmd = [NGINX_BIN, "-c", abs_nginx_conf, "-p", abs_nginx_dir]
 
             # Start syscount with bpftime first; the target agent opens shared

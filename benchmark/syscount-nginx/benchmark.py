@@ -614,6 +614,9 @@ def run_userbpf_syscount(target_pid=None):
             syscall_server_path = os.path.abspath(SYSCALL_SERVER_PATH)
             syscount_path = os.path.abspath(SYSCOUNT_PATH)
             syscount_cmd = [
+                "sudo",
+                "env",
+                f"LD_PRELOAD={syscall_server_path}",
                 syscount_path,
                 "-d",
                 SYSCOUNT_DURATION,
@@ -626,11 +629,8 @@ def run_userbpf_syscount(target_pid=None):
             debug_print(f"Starting syscount with bpftime: {' '.join(syscount_cmd)}")
             trace_files = open_trace_logs(test_name, i)
             stdout_path, stderr_path, stdout_file, stderr_file = trace_files
-            syscount_env = os.environ.copy()
-            syscount_env["LD_PRELOAD"] = syscall_server_path
             syscount_proc = subprocess.Popen(
                 syscount_cmd,
-                env=syscount_env,
                 stdout=stdout_file,
                 stderr=stderr_file,
             )

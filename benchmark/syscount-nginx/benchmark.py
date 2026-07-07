@@ -29,6 +29,7 @@ NGINX_CMD = ["nginx", "-c", "nginx.conf", "-p", "benchmark/syscount-nginx"]
 TEST_URL = f"http://127.0.0.1:{NGINX_PORT}/index.html"
 SYSCOUNT_PATH = "example/tracing/syscount/syscount"
 AGENT_PATH = "build/runtime/agent/libbpftime-agent.so"
+AGENT_TRANSFORMER_PATH = "build/attach/text_segment_transformer/libbpftime-agent-transformer.so"
 SYSCALL_SERVER_PATH = "build/runtime/syscall-server/libbpftime-syscall-server.so"
 TRACE_LOG_ROOT = Path(os.environ.get(
     "SYSCOUNT_NGINX_TRACE_LOG_DIR",
@@ -549,6 +550,10 @@ def run_userbpf_syscount(target_pid=None):
     if not check_file_exists(SYSCOUNT_PATH) or not check_file_exists(AGENT_PATH) or not check_file_exists(SYSCALL_SERVER_PATH):
         debug_print("Skipping userspace BPF syscount tests: required files not found")
         return
+    use_syscall_transformer = bpftime_syscall_supported()
+    if use_syscall_transformer and not check_file_exists(AGENT_TRANSFORMER_PATH):
+        debug_print("Skipping userspace BPF syscount tests: syscall transformer not found")
+        return
     
     for i in range(NUM_RUNS):
         print(f"Run {i+1}/{NUM_RUNS}...")
@@ -561,7 +566,11 @@ def run_userbpf_syscount(target_pid=None):
             # Start nginx with bpftime
             debug_print("Starting nginx with bpftime")
             env = os.environ.copy()
-            env["LD_PRELOAD"] = AGENT_PATH
+            if use_syscall_transformer:
+                env["AGENT_SO"] = AGENT_PATH
+                env["LD_PRELOAD"] = AGENT_TRANSFORMER_PATH
+            else:
+                env["LD_PRELOAD"] = AGENT_PATH
             
             # Use the same nginx path approach as baseline
             nginx_conf = "benchmark/syscount-nginx/nginx.conf"

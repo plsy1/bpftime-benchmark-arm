@@ -20,9 +20,16 @@ on:
 
 jobs:
   smoke:
-    name: uprobe + syscount-nginx + ssl-nginx smoke
+    name: ${{ matrix.benchmark }} smoke
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        benchmark:
+          - uprobe
+          - syscount-nginx
+          - ssl-nginx
 
     steps:
       - name: Checkout
@@ -68,22 +75,29 @@ jobs:
 
       - name: Run smoke benchmarks
         env:
+          BENCHMARK: ${{ matrix.benchmark }}
           UPROBE_TEST_ITER: ${{ github.event.inputs.uprobe_test_iter || '10000' }}
           SSL_SIZES: ${{ github.event.inputs.ssl_sizes || '1kb' }}
         run: |
+          extra_args=()
+          if [[ "$BENCHMARK" == "uprobe" ]]; then
+            extra_args+=(--uprobe-test-iter "$UPROBE_TEST_ITER")
+          elif [[ "$BENCHMARK" == "ssl-nginx" ]]; then
+            extra_args+=(--ssl-sizes "$SSL_SIZES")
+          fi
+
           ./run_bpftime_arm64_benchmarks.sh \
             --build \
             --mode smoke \
-            --skip-syscall \
-            --uprobe-test-iter "$UPROBE_TEST_ITER" \
-            --ssl-sizes "$SSL_SIZES" \
-            --output-dir "$PWD/benchmark-results-arm64-smoke"
+            --only "$BENCHMARK" \
+            "${extra_args[@]}" \
+            --output-dir "$PWD/benchmark-results-arm64-smoke-$BENCHMARK"
 
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: arm64-smoke-benchmark-results
+          name: arm64-${{ matrix.benchmark }}-smoke-benchmark-results
           path: |
-            benchmark-results-arm64-smoke.tar.gz
+            benchmark-results-arm64-smoke-${{ matrix.benchmark }}.tar.gz
           if-no-files-found: warn

@@ -36,15 +36,20 @@ def init_safe_pids():
     """Initialize the list of PIDs that should never be killed"""
     global _safe_pids
     
-    # Add our own PID and parent PID to safe list
+    # Add our own PID and all ancestors to avoid killing the workflow runner.
     current_pid = os.getpid()
-    _safe_pids.add(current_pid)
-    
-    try:
-        parent_pid = os.getppid()
-        _safe_pids.add(parent_pid)
-    except:
-        pass
+    while current_pid and current_pid not in _safe_pids:
+        _safe_pids.add(current_pid)
+        try:
+            parent_output = subprocess.run(
+                ["ps", "-o", "ppid=", "-p", str(current_pid)],
+                capture_output=True,
+                text=True,
+                timeout=3,
+            ).stdout.strip()
+            current_pid = int(parent_output) if parent_output else 0
+        except:
+            break
     
     # Also add the shell's process group
     try:
@@ -109,10 +114,9 @@ def cleanup_processes():
         script_name = os.path.basename(sys.argv[0])
         
         pgrep_cmds = [
-            # Use exact name matching where possible
-            ["pgrep", "-f", f"\\b{victim_basename}\\b"],
-            ["pgrep", "-f", f"\\b{syscall_basename}\\b"],
-            ["pgrep", "-f", f"\\b{bpftime_basename}\\b"]
+            ["pgrep", "-x", victim_basename],
+            ["pgrep", "-x", syscall_basename],
+            ["pgrep", "-x", bpftime_basename],
         ]
         
         for cmd in pgrep_cmds:

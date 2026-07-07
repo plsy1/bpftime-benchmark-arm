@@ -571,15 +571,6 @@ def run_userbpf_syscount(target_pid=None):
         trace_files = None
         req_per_sec = None
         try:
-            # Start nginx with bpftime
-            debug_print("Starting nginx with bpftime")
-            env = os.environ.copy()
-            if use_syscall_transformer:
-                env["AGENT_SO"] = os.path.abspath(AGENT_PATH)
-                env["LD_PRELOAD"] = os.path.abspath(AGENT_TRANSFORMER_PATH)
-            else:
-                env["LD_PRELOAD"] = AGENT_PATH
-            
             # Use the same nginx path approach as baseline
             nginx_conf = "benchmark/syscount-nginx/nginx.conf"
             if not os.path.exists(nginx_conf):
@@ -590,36 +581,9 @@ def run_userbpf_syscount(target_pid=None):
             abs_nginx_conf = os.path.abspath(nginx_conf)
             abs_nginx_dir = os.path.dirname(abs_nginx_conf)
             modified_nginx_cmd = ["nginx", "-c", abs_nginx_conf, "-p", abs_nginx_dir]
-            
-            debug_print(f"Starting nginx with bpftime: {' '.join(modified_nginx_cmd)}")
-            if use_syscall_transformer and bpftime_target_needs_sudo():
-                sudo_env = ["sudo", "env", f"AGENT_SO={env['AGENT_SO']}", f"LD_PRELOAD={env['LD_PRELOAD']}"]
-                nginx_proc = subprocess.Popen(
-                    [*sudo_env, *modified_nginx_cmd],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
-            else:
-                nginx_proc = subprocess.Popen(modified_nginx_cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            time.sleep(2)  # Give nginx time to start
-            
-            # Check if nginx started successfully
-            if nginx_proc.poll() is not None:
-                stdout, stderr = nginx_proc.communicate()
-                debug_print(f"nginx with bpftime failed to start. Exit code: {nginx_proc.returncode}")
-                debug_print(f"stdout: {stdout.decode() if stdout else 'None'}")
-                debug_print(f"stderr: {stderr.decode() if stderr else 'None'}")
-                mark_failed(test_name, "exceptions")
-                continue
-            
-            # Get nginx PID
-            nginx_pid = subprocess.run(["pgrep", "-f", "nginx -c"], capture_output=True, text=True).stdout.strip()
-            debug_print(f"nginx PID: {nginx_pid}")
-            if not nginx_pid:
-                debug_print("nginx PID not found, skipping syscount")
-                continue
-            
-            # Start syscount with bpftime
+
+            # Start syscount with bpftime first; the target agent opens shared
+            # memory created by this loader process.
             syscall_server_path = os.path.abspath(SYSCALL_SERVER_PATH)
             syscount_path = os.path.abspath(SYSCOUNT_PATH)
             syscount_cmd = [
@@ -630,9 +594,7 @@ def run_userbpf_syscount(target_pid=None):
                 "-d",
                 SYSCOUNT_DURATION,
             ]
-            if target_pid:
-                syscount_cmd.extend(["-p", nginx_pid])
-            else:
+            if not target_pid:
                 # Match the original benchmark design: syscount does not target nginx.
                 syscount_cmd.extend(["-p", "1"])
             debug_print(f"Starting syscount with bpftime: {' '.join(syscount_cmd)}")
@@ -647,6 +609,41 @@ def run_userbpf_syscount(target_pid=None):
             if syscount_proc.poll() is not None:
                 debug_print(f"userbpf syscount exited before wrk. Exit code: {syscount_proc.returncode}")
                 mark_failed(test_name, "trace_failures")
+                continue
+
+            env = os.environ.copy()
+            nginx_label = "nginx"
+            if target_pid:
+                nginx_label = "nginx with bpftime"
+                if use_syscall_transformer:
+                    env["AGENT_SO"] = os.path.abspath(AGENT_PATH)
+                    env["LD_PRELOAD"] = os.path.abspath(AGENT_TRANSFORMER_PATH)
+                else:
+                    env["LD_PRELOAD"] = AGENT_PATH
+
+            debug_print(f"Starting {nginx_label}: {' '.join(modified_nginx_cmd)}")
+            if target_pid and use_syscall_transformer and bpftime_target_needs_sudo():
+                sudo_env = ["sudo", "env", f"AGENT_SO={env['AGENT_SO']}", f"LD_PRELOAD={env['LD_PRELOAD']}"]
+                nginx_proc = subprocess.Popen(
+                    [*sudo_env, *modified_nginx_cmd],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            else:
+                nginx_proc = subprocess.Popen(
+                    modified_nginx_cmd,
+                    env=env if target_pid else None,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            time.sleep(2)  # Give nginx time to start
+
+            if nginx_proc.poll() is not None:
+                stdout, stderr = nginx_proc.communicate()
+                debug_print(f"{nginx_label} failed to start. Exit code: {nginx_proc.returncode}")
+                debug_print(f"stdout: {stdout.decode() if stdout else 'None'}")
+                debug_print(f"stderr: {stderr.decode() if stderr else 'None'}")
+                mark_failed(test_name, "exceptions")
                 continue
             
             # Run wrk

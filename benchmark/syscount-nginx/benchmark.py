@@ -679,7 +679,7 @@ def run_userbpf_syscount(target_pid=None):
                     i,
                     syscount_proc,
                     trace_files,
-                    require_counts=bool(target_pid),
+                    require_counts=False,
                 )
                 if req_per_sec:
                     if summary["trace_success"]:

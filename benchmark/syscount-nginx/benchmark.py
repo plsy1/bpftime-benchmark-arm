@@ -682,12 +682,13 @@ def run_userbpf_syscount(target_pid=None):
                     require_counts=bool(target_pid),
                 )
                 if req_per_sec:
-                    results[test_name].append(req_per_sec)
-                    mark_valid(test_name)
-                    print(f"  Requests/sec: {req_per_sec:.2f}")
-                    if not summary["trace_success"]:
+                    if summary["trace_success"]:
+                        results[test_name].append(req_per_sec)
+                        mark_valid(test_name)
+                        print(f"  Requests/sec: {req_per_sec:.2f}")
+                    else:
                         mark_failed(test_name, "trace_failures")
-                        debug_print("userbpf syscount trace was not effective; throughput is still kept in results")
+                        debug_print("userbpf syscount trace was not effective; run is not counted")
             
             cleanup_processes()
 

@@ -114,6 +114,7 @@ if [[ -v SSL_NGINX_SSLSNIFF_ARGS ]]; then
 fi
 USER_UPROBE_ITER="${UPROBE_ITER:-}"
 USER_UPROBE_TEST_ITER="${UPROBE_TEST_ITER:-}"
+MPK_ITER="${MPK_ITER:-10}"
 USER_LLVM_DIR="${LLVM_DIR:-}"
 INSTALL_DEPS="${INSTALL_DEPS:-0}"
 CHECK_DEPS="${CHECK_DEPS:-1}"
@@ -661,6 +662,7 @@ log "SSL_NGINX_SIZES: $SSL_NGINX_SIZES"
 log "SSL_NGINX_SSLSNIFF_ARGS: ${SSL_NGINX_SSLSNIFF_ARGS:-<default sslsniff args>}"
 log "SSL_NGINX_STRICT_TRACE_ERRORS: $SSL_NGINX_STRICT_TRACE_ERRORS"
 log "SYSCOUNT_NGINX_BIN: ${SYSCOUNT_NGINX_BIN:-nginx}"
+log "MPK_ITER: $MPK_ITER"
 
 if [[ ! -d "$REPO" ]]; then
   log "ERROR: repository path does not exist: $REPO"
@@ -735,7 +737,7 @@ if [[ "$RUN_BUILD" == "1" ]]; then
       BUILD_ATTACH_IMPL_EXAMPLE_FLAG=1
     fi
     export BUILD_ATTACH_IMPL_EXAMPLE_FLAG
-    export RUN_UPROBE RUN_SYSCALL RUN_SYSCOUNT RUN_SSL_NGINX
+    export RUN_UPROBE RUN_SYSCALL RUN_SYSCOUNT RUN_SSL_NGINX RUN_MPK
 
     if ! run_step build_bpftime_non_mpk bash -lc '
     set -e
@@ -746,13 +748,16 @@ if [[ "$RUN_BUILD" == "1" ]]; then
       -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO \
       -DENABLE_PROBE_WRITE_CHECK=0 \
       -DENABLE_PROBE_READ_CHECK=0 \
+      -DBPFTIME_ENABLE_MPK=0 \
       -DBUILD_ATTACH_IMPL_EXAMPLE=${BUILD_ATTACH_IMPL_EXAMPLE_FLAG}
     cmake --build build --config RelWithDebInfo --target install -j"$(nproc)"
     if [[ "$BUILD_ATTACH_IMPL_EXAMPLE_FLAG" == "1" ]]; then
       cmake --build build --config RelWithDebInfo --target attach_impl_example_nginx -j"$(nproc)" || true
     fi
-    if [[ "$RUN_UPROBE" == "1" ]]; then
+    if [[ "$RUN_UPROBE" == "1" || "$RUN_MPK" == "1" ]]; then
       make -C benchmark test
+    fi
+    if [[ "$RUN_UPROBE" == "1" ]]; then
       make -C benchmark/uprobe
     fi
     if [[ "$RUN_SYSCALL" == "1" ]]; then
@@ -771,6 +776,25 @@ if [[ "$RUN_BUILD" == "1" ]]; then
       RUN_SYSCOUNT=0
       RUN_SSL_NGINX=0
       RUN_MPK=0
+    fi
+
+    if [[ "$RUN_MPK" == "1" ]]; then
+      if ! run_step build_bpftime_mpk bash -lc '
+      set -e
+      cmake -Bbuild-mpk ${LLVM_CMAKE_ARG} \
+        -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo \
+        -DBPFTIME_LLVM_JIT=1 \
+        -DBPFTIME_ENABLE_LTO=1 \
+        -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO \
+        -DENABLE_PROBE_WRITE_CHECK=0 \
+        -DENABLE_PROBE_READ_CHECK=0 \
+        -DBPFTIME_ENABLE_MPK=1 \
+        -DBUILD_ATTACH_IMPL_EXAMPLE=0
+      cmake --build build-mpk --config RelWithDebInfo --target install -j"$(nproc)"
+      '; then
+        log "MPK build failed; skipping MPK benchmark execution"
+        RUN_MPK=0
+      fi
     fi
   fi
 else
@@ -813,7 +837,7 @@ if [[ "$RUN_SSL_NGINX" == "1" ]]; then
 fi
 
 if [[ "$RUN_MPK" == "1" ]]; then
-  run_step mpk python3 benchmark/mpk/benchmark.py
+  run_step mpk python3 benchmark/mpk/benchmark.py --iter "$MPK_ITER"
   cleanup_bpftime
 else
   log "Skipping MPK benchmark"

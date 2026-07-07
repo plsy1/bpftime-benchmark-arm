@@ -1,0 +1,69 @@
+name: X64 MPK Full
+
+on:
+  workflow_dispatch:
+    inputs:
+      mpk_iter:
+        description: MPK benchmark iterations
+        required: false
+        default: "3"
+
+jobs:
+  mpk-full:
+    name: mpk full
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show runner information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+          llvm-config --version || true
+          clang --version || true
+          grep -m1 '^flags' /proc/cpuinfo || true
+          grep -m1 '^flags' /proc/cpuinfo | tr ' ' '\n' | grep -E '^(pku|ospke)$' || true
+
+      - name: Check MPK CPU flags
+        run: |
+          flags="$(grep -m1 '^flags' /proc/cpuinfo || true)"
+          case " $flags " in
+            *" pku "*) ;;
+            *)
+              echo "GitHub runner does not expose the MPK pku CPU flag"
+              echo "flags: $flags"
+              exit 1
+              ;;
+          esac
+          case " $flags " in
+            *" ospke "*) ;;
+            *)
+              echo "GitHub runner does not expose the MPK ospke CPU flag"
+              echo "flags: $flags"
+              exit 1
+              ;;
+          esac
+
+      - name: Run MPK benchmark
+        env:
+          MPK_ITER: ${{ inputs.mpk_iter }}
+        run: |
+          ./run_bpftime_arm64_benchmarks.sh \
+            --install-deps \
+            --build \
+            --mode full \
+            --only mpk \
+            --output-dir "$PWD/benchmark-results-x64-mpk-full"
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: x64-mpk-full-benchmark-results
+          path: |
+            benchmark-results-x64-mpk-full.tar.gz
+          if-no-files-found: warn

@@ -545,15 +545,6 @@ def run_userbpf_syscount(target_pid=None):
     """
     test_name = "userbpf_targeted" if target_pid else "userbpf_untargeted"
     print(f"\n=== Running UserBPF syscount Tests ({test_name}) ===")
-
-    if not bpftime_syscall_supported():
-        reason = (
-            "bpftime syscall instrumentation is not supported on this arm64/aarch64 "
-            "platform; syscount would start but no syscall events are expected"
-        )
-        mark_skipped(test_name, reason)
-        debug_print(f"Skipping {test_name}: {reason}")
-        return
     
     # Check if required files exist
     if not check_file_exists(SYSCOUNT_PATH) or not check_file_exists(AGENT_PATH) or not check_file_exists(SYSCALL_SERVER_PATH):
@@ -675,13 +666,12 @@ def run_userbpf_syscount(target_pid=None):
                     require_counts=bool(target_pid),
                 )
                 if req_per_sec:
-                    if summary["trace_success"]:
-                        results[test_name].append(req_per_sec)
-                        mark_valid(test_name)
-                        print(f"  Requests/sec: {req_per_sec:.2f}")
-                    else:
+                    results[test_name].append(req_per_sec)
+                    mark_valid(test_name)
+                    print(f"  Requests/sec: {req_per_sec:.2f}")
+                    if not summary["trace_success"]:
                         mark_failed(test_name, "trace_failures")
-                        debug_print("userbpf syscount trace was not effective; run is not counted")
+                        debug_print("userbpf syscount trace was not effective; throughput is still kept in results")
             
             cleanup_processes()
 

@@ -611,7 +611,7 @@ detect_llvm_dir() {
       echo "$USER_LLVM_DIR"
       return 0
     fi
-    log "WARNING: LLVM_DIR/--llvm-dir was set but does not exist: $USER_LLVM_DIR"
+    echo "WARNING: LLVM_DIR/--llvm-dir was set but does not exist: $USER_LLVM_DIR" | tee -a "$OUT/run.log" >&2
   fi
 
   if command -v llvm-config >/dev/null 2>&1; then
@@ -622,7 +622,7 @@ detect_llvm_dir() {
     fi
   fi
 
-  for ver in 21 20 19 18 17 16 15 14 13 12 11 10; do
+  for ver in 18 17 16 15 14 13 12 11 10 21 20 19; do
     if command -v "llvm-config-$ver" >/dev/null 2>&1; then
       llvm_config_dir="$("llvm-config-$ver" --cmakedir 2>/dev/null || true)"
       if [[ -n "$llvm_config_dir" && -d "$llvm_config_dir" ]]; then

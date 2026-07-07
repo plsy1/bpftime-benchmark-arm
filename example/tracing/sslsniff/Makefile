@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 OUTPUT := .output
 CLANG ?= clang
+OBJCOPY ?= llvm-objcopy
 LIBBPF_SRC := $(abspath ../../../third_party/libbpf/src)
 BPFTOOL_SRC := $(abspath ../../../third_party/bpftool/src)
 LIBBPF_OBJ := $(abspath $(OUTPUT)/libbpf.a)
@@ -109,6 +110,7 @@ $(OUTPUT)/%.bpf.o: %.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) $(VMLINUX) | $(OUTPUT) 
 		     $(INCLUDES) $(CLANG_BPF_SYS_INCLUDES)		      \
 		     -c $(filter %.c,$^) -o $(patsubst %.bpf.o,%.tmp.bpf.o,$@)
 	$(Q)$(BPFTOOL) gen object $@ $(patsubst %.bpf.o,%.tmp.bpf.o,$@)
+	$(Q)$(OBJCOPY) --remove-section=.BTF.ext $@
 
 # Generate BPF skeletons
 $(OUTPUT)/%.skel.h: $(OUTPUT)/%.bpf.o | $(OUTPUT) $(BPFTOOL)

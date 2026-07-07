@@ -243,13 +243,20 @@ def main():
         
         # Create plots
         plot_results(all_results, OUTPUT_DIR)
-        
-        print("\nBenchmark completed successfully!")
+
+        failed = [result for result in all_results if result.get("returncode", 0) != 0]
+        if failed:
+            names = ", ".join(result["size_name"] for result in failed)
+            print(f"\nBenchmark completed with failed size(s): {names}", flush=True)
+            raise SystemExit(1)
+
+        print("\nBenchmark completed successfully!", flush=True)
         
     except Exception as e:
         print(f"Error during benchmark: {e}")
         import traceback
         traceback.print_exc()
+        raise
 
 if __name__ == "__main__":
     main() 

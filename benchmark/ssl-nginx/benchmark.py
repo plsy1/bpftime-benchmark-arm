@@ -4,6 +4,7 @@ import re
 import os
 import time
 import json
+import shlex
 import statistics
 import signal
 import sys
@@ -23,8 +24,13 @@ NGINX_CMD = ["nginx", "-c", "nginx.conf", "-p", "benchmark/ssl-nginx"]
 TEST_URL = "https://127.0.0.1:4043/index.html"
 SSLSNIFF_PATH = "example/tracing/sslsniff/sslsniff"
 KERNEL_SSLSNIFF_PATH = "example/tracing/sslsniff/sslsniff"
+SSLSNIFF_ARGS = shlex.split(os.environ.get("SSL_NGINX_SSLSNIFF_ARGS", ""))
 AGENT_PATH = "build/runtime/agent/libbpftime-agent.so"
 SYSCALL_SERVER_PATH = "build/runtime/syscall-server/libbpftime-syscall-server.so"
+TRACE_LOG_ROOT = Path(os.environ.get(
+    "SSL_NGINX_TRACE_LOG_DIR",
+    f"benchmark/ssl-nginx/trace_logs/{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+))
 
 # Result storage
 results = {
@@ -49,6 +55,7 @@ run_stats = {
         "timeouts": 0,
         "parse_failures": 0,
         "wrk_failures": 0,
+        "attach_failures": 0,
         "exceptions": 0,
     },
     "bpftime_sslsniff": {
@@ -59,9 +66,14 @@ run_stats = {
         "parse_failures": 0,
         "wrk_failures": 0,
         "readiness_failures": 0,
+        "attach_failures": 0,
         "retry_attempts": 0,
         "exceptions": 0,
     },
+}
+trace_observability = {
+    "kernel_sslsniff": [],
+    "bpftime_sslsniff": [],
 }
 
 # Define a signal handler to prevent unexpected termination
@@ -85,6 +97,79 @@ def mark_failed(test_name, reason):
     run_stats[test_name]["failed_attempts"] += 1
     if reason in run_stats[test_name]:
         run_stats[test_name][reason] += 1
+
+def open_trace_logs(test_name, run_index, attempt=None):
+    TRACE_LOG_ROOT.mkdir(parents=True, exist_ok=True)
+    suffix = f"run{run_index + 1:02d}"
+    if attempt is not None:
+        suffix += f"_attempt{attempt + 1:02d}"
+    stdout_path = TRACE_LOG_ROOT / f"{test_name}_{suffix}.stdout.log"
+    stderr_path = TRACE_LOG_ROOT / f"{test_name}_{suffix}.stderr.log"
+    stdout_file = stdout_path.open("w")
+    stderr_file = stderr_path.open("w")
+    return stdout_path, stderr_path, stdout_file, stderr_file
+
+def summarize_trace_log(test_name, run_index, stdout_path, stderr_path, returncode):
+    stdout_text = stdout_path.read_text(errors="replace") if stdout_path.exists() else ""
+    stderr_text = stderr_path.read_text(errors="replace") if stderr_path.exists() else ""
+    event_lines = [
+        line for line in stdout_text.splitlines()
+        if line.startswith(("READ/RECV", "WRITE/SEND", "HANDSHAKE"))
+    ]
+    attach_markers = [
+        marker for marker in ("OpenSSL path:", "GnuTLS path:", "NSS path:")
+        if marker in stdout_text
+    ]
+    error_markers = [
+        marker for marker in (
+            "no program attached",
+            "failed to open perf buffer",
+            "error polling perf buffer",
+            "ERROR:",
+            "Error:",
+        )
+        if marker in stdout_text or marker in stderr_text
+    ]
+    summary = {
+        "run": run_index + 1,
+        "stdout_path": str(stdout_path),
+        "stderr_path": str(stderr_path),
+        "returncode": returncode,
+        "event_count": len(event_lines),
+        "attach_markers": attach_markers,
+        "attach_started": bool(attach_markers),
+        "attach_success": bool(attach_markers) and not error_markers,
+        "error_markers": error_markers,
+        "stdout_bytes": stdout_path.stat().st_size if stdout_path.exists() else 0,
+        "stderr_bytes": stderr_path.stat().st_size if stderr_path.exists() else 0,
+    }
+    trace_observability[test_name].append(summary)
+    debug_print(
+        f"{test_name} run {run_index + 1}: attach_success={summary['attach_success']} "
+        f"events={summary['event_count']} returncode={returncode} "
+        f"stdout={stdout_path} stderr={stderr_path}"
+    )
+    return summary
+
+def terminate_and_summarize_trace(test_name, run_index, proc, stdout_path, stderr_path, stdout_file, stderr_file):
+    returncode = None
+    if proc is not None:
+        try:
+            proc.terminate()
+            proc.wait(timeout=5)
+        except Exception:
+            try:
+                proc.kill()
+                proc.wait(timeout=5)
+            except Exception:
+                pass
+        returncode = proc.poll()
+    stdout_file.close()
+    stderr_file.close()
+    return summarize_trace_log(test_name, run_index, stdout_path, stderr_path, returncode)
+
+def trace_is_effective(summary):
+    return summary["attach_success"] and summary["event_count"] > 0
 
 def remove_access_log():
     """Remove the nginx access log file"""
@@ -378,13 +463,22 @@ def run_kernel_sslsniff():
             print(f"Run {i+1}/{NUM_RUNS}...")
             
             # Start sslsniff
-            debug_print(f"Starting kernel sslsniff: sudo {KERNEL_SSLSNIFF_PATH}")
+            kernel_cmd = ["sudo", KERNEL_SSLSNIFF_PATH, *SSLSNIFF_ARGS]
+            debug_print(f"Starting kernel sslsniff: {' '.join(kernel_cmd)}")
             sslsniff_proc = None
+            trace_files = None
+            req_per_sec = None
             try:
-                sslsniff_proc = subprocess.Popen(["sudo", KERNEL_SSLSNIFF_PATH], 
-                                                stdout=subprocess.DEVNULL,
-                                                stderr=subprocess.DEVNULL)
+                trace_files = open_trace_logs("kernel_sslsniff", i)
+                stdout_path, stderr_path, stdout_file, stderr_file = trace_files
+                sslsniff_proc = subprocess.Popen(kernel_cmd,
+                                                stdout=stdout_file,
+                                                stderr=stderr_file)
                 time.sleep(2)  # Give sslsniff time to start
+                if sslsniff_proc.poll() is not None:
+                    mark_failed("kernel_sslsniff", "attach_failures")
+                    debug_print(f"kernel sslsniff exited before wrk. Exit code: {sslsniff_proc.returncode}")
+                    continue
                 
                 # Run wrk
                 debug_print(f"Running wrk with command: {' '.join(WRK_CMD)}")
@@ -398,11 +492,7 @@ def run_kernel_sslsniff():
                     continue
                 req_per_sec = parse_wrk_output(result.stdout)
 
-                if req_per_sec:
-                    results["kernel_sslsniff"].append(req_per_sec)
-                    mark_valid("kernel_sslsniff")
-                    print(f"  Requests/sec: {req_per_sec:.2f}")
-                else:
+                if not req_per_sec:
                     mark_failed("kernel_sslsniff", "parse_failures")
                     debug_print(f"Failed to parse output: {result.stdout}")
             except subprocess.TimeoutExpired:
@@ -414,12 +504,31 @@ def run_kernel_sslsniff():
                 traceback.print_exc()
             finally:
                 debug_print("Killing sslsniff")
-                if sslsniff_proc is not None:
-                    try:
-                        sslsniff_proc.terminate()
-                        sslsniff_proc.wait(timeout=5)
-                    except Exception:
-                        pass
+                if trace_files is not None:
+                    stdout_path, stderr_path, stdout_file, stderr_file = trace_files
+                    summary = terminate_and_summarize_trace(
+                        "kernel_sslsniff",
+                        i,
+                        sslsniff_proc,
+                        stdout_path,
+                        stderr_path,
+                        stdout_file,
+                        stderr_file,
+                    )
+                    if req_per_sec:
+                        if trace_is_effective(summary):
+                            results["kernel_sslsniff"].append(req_per_sec)
+                            mark_valid("kernel_sslsniff")
+                            print(f"  Requests/sec: {req_per_sec:.2f}")
+                        elif summary["event_count"] == 0:
+                            mark_failed("kernel_sslsniff", "attach_failures")
+                            debug_print("kernel sslsniff produced no SSL events; run is not counted")
+                        else:
+                            mark_failed("kernel_sslsniff", "attach_failures")
+                            debug_print(
+                                "kernel sslsniff produced SSL events but reported trace errors; "
+                                "run is not counted"
+                            )
                 subprocess.run(["sudo", "pkill", "-f", "sslsniff"], stderr=subprocess.DEVNULL)
                 time.sleep(1)
     
@@ -471,16 +580,25 @@ def run_bpftime_sslsniff():
 
             nginx_proc = None
             sslsniff_proc = None
+            trace_files = None
+            req_per_sec = None
             try:
                 # Start sslsniff with bpftime
-                debug_print(f"Starting sslsniff with bpftime: LD_PRELOAD={SYSCALL_SERVER_PATH} {SSLSNIFF_PATH}")
+                bpftime_cmd = [SSLSNIFF_PATH, *SSLSNIFF_ARGS]
+                debug_print(f"Starting sslsniff with bpftime: LD_PRELOAD={SYSCALL_SERVER_PATH} {' '.join(bpftime_cmd)}")
                 env = os.environ.copy()
                 env["LD_PRELOAD"] = SYSCALL_SERVER_PATH
-                sslsniff_proc = subprocess.Popen([SSLSNIFF_PATH],
+                trace_files = open_trace_logs("bpftime_sslsniff", i, attempt)
+                stdout_path, stderr_path, stdout_file, stderr_file = trace_files
+                sslsniff_proc = subprocess.Popen(bpftime_cmd,
                                                 env=env,
-                                                stdout=subprocess.DEVNULL,
-                                                stderr=subprocess.DEVNULL)
+                                                stdout=stdout_file,
+                                                stderr=stderr_file)
                 time.sleep(2)  # Give sslsniff time to start
+                if sslsniff_proc.poll() is not None:
+                    mark_failed("bpftime_sslsniff", "attach_failures")
+                    debug_print(f"bpftime sslsniff exited before nginx/wrk. Exit code: {sslsniff_proc.returncode}")
+                    continue
 
                 # Start nginx with bpftime
                 debug_print(f"Starting nginx with bpftime: LD_PRELOAD={AGENT_PATH} {' '.join(modified_nginx_cmd)}")
@@ -505,14 +623,9 @@ def run_bpftime_sslsniff():
                     continue
                 req_per_sec = parse_wrk_output(result.stdout)
 
-                if req_per_sec:
-                    results["bpftime_sslsniff"].append(req_per_sec)
-                    mark_valid("bpftime_sslsniff")
-                    print(f"  Requests/sec: {req_per_sec:.2f}")
-                    break
-
-                mark_failed("bpftime_sslsniff", "parse_failures")
-                debug_print(f"Failed to parse stdout: {result.stdout}")
+                if not req_per_sec:
+                    mark_failed("bpftime_sslsniff", "parse_failures")
+                    debug_print(f"Failed to parse stdout: {result.stdout}")
             except subprocess.TimeoutExpired:
                 mark_failed("bpftime_sslsniff", "timeouts")
                 debug_print("wrk command timed out")
@@ -527,11 +640,34 @@ def run_bpftime_sslsniff():
                     if nginx_proc is not None:
                         nginx_proc.terminate()
                         nginx_proc.wait(timeout=5)
-                    if sslsniff_proc is not None:
-                        sslsniff_proc.terminate()
-                        sslsniff_proc.wait(timeout=5)
                 except Exception as e:
                     debug_print(f"Error terminating processes: {e}")
+                if trace_files is not None:
+                    stdout_path, stderr_path, stdout_file, stderr_file = trace_files
+                    summary = terminate_and_summarize_trace(
+                        "bpftime_sslsniff",
+                        i,
+                        sslsniff_proc,
+                        stdout_path,
+                        stderr_path,
+                        stdout_file,
+                        stderr_file,
+                    )
+                    if req_per_sec:
+                        if trace_is_effective(summary):
+                            results["bpftime_sslsniff"].append(req_per_sec)
+                            mark_valid("bpftime_sslsniff")
+                            print(f"  Requests/sec: {req_per_sec:.2f}")
+                            break
+                        elif summary["event_count"] == 0:
+                            mark_failed("bpftime_sslsniff", "attach_failures")
+                            debug_print("bpftime sslsniff produced no SSL events; run is not counted")
+                        else:
+                            mark_failed("bpftime_sslsniff", "attach_failures")
+                            debug_print(
+                                "bpftime sslsniff produced SSL events but reported trace errors; "
+                                "run is not counted"
+                            )
 
                 cleanup_processes()
         else:
@@ -549,6 +685,7 @@ def print_statistics():
         "parse_failures",
         "wrk_failures",
         "readiness_failures",
+        "attach_failures",
         "exceptions",
     ]
     
@@ -602,6 +739,18 @@ def print_statistics():
         improvement = ((bpftime_avg - kernel_avg) / kernel_avg) * 100
         print(f"bpftime improvement over kernel: {improvement:.2f}%")
 
+    print("\nTrace observability:")
+    for test_name, summaries in trace_observability.items():
+        if not summaries:
+            print(f"  {test_name}: no trace logs")
+            continue
+        total_events = sum(item["event_count"] for item in summaries)
+        attach_ok = sum(1 for item in summaries if item["attach_success"])
+        print(
+            f"  {test_name}: attach_success={attach_ok}/{len(summaries)} "
+            f"events={total_events} logs={TRACE_LOG_ROOT}"
+        )
+
 def save_results():
     """Save results to a JSON file"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -616,12 +765,21 @@ def save_results():
                 "wrk_timeout": WRK_TIMEOUT,
                 "ready_timeout": READY_TIMEOUT,
                 "bpftime_retries": BPFTIME_RETRIES,
+                "sslsniff_args": SSLSNIFF_ARGS,
+                "trace_log_root": str(TRACE_LOG_ROOT),
             },
             "stats": run_stats,
+            "trace_observability": trace_observability,
             "results": results
         }, f, indent=2)
     
     print(f"\nResults saved to {filename}")
+
+def benchmark_failed():
+    return any(
+        stats["valid_runs"] < stats["target_runs"]
+        for stats in run_stats.values()
+    )
 
 def main():
     try:
@@ -685,9 +843,13 @@ def main():
         # Print and save results
         print_statistics()
         save_results()
+        if benchmark_failed():
+            debug_print("One or more benchmark phases did not produce the requested valid runs")
+            sys.exit(1)
         
     except KeyboardInterrupt:
         print("\nBenchmark interrupted.")
+        sys.exit(130)
     except Exception as e:
         print(f"\nUnexpected error: {e}")
         traceback.print_exc()

@@ -46,6 +46,10 @@ Options:
                             Default: 100000 in full, 10000 in smoke.
   --ssl-sizes LIST          Comma-separated ssl-nginx sizes.
                             Default: 16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb.
+  --ssl-nginx-sslsniff-args ARGS
+                            Extra arguments passed to sslsniff. On AArch64 the default
+                            is "--no-gnutls --no-nss -c nginx" unless
+                            SSL_NGINX_SSLSNIFF_ARGS is already set.
   --only NAME               Run only one benchmark: uprobe, syscall, syscount, ssl-nginx, mpk.
   --skip-uprobe             Skip uprobe benchmark.
   --skip-syscall            Skip syscall benchmark.
@@ -96,6 +100,11 @@ RUN_SYSCOUNT="${RUN_SYSCOUNT:-1}"
 RUN_SSL_NGINX="${RUN_SSL_NGINX:-1}"
 RUN_MPK="${RUN_MPK:-0}"
 USER_SSL_NGINX_SIZES="${SSL_NGINX_SIZES:-}"
+USER_SSL_NGINX_SSLSNIFF_ARGS="${SSL_NGINX_SSLSNIFF_ARGS-}"
+SSL_NGINX_SSLSNIFF_ARGS_IS_SET=0
+if [[ -v SSL_NGINX_SSLSNIFF_ARGS ]]; then
+  SSL_NGINX_SSLSNIFF_ARGS_IS_SET=1
+fi
 USER_UPROBE_ITER="${UPROBE_ITER:-}"
 USER_UPROBE_TEST_ITER="${UPROBE_TEST_ITER:-}"
 USER_LLVM_DIR="${LLVM_DIR:-}"
@@ -175,6 +184,16 @@ while [[ $# -gt 0 ]]; do
       ;;
     --ssl-sizes=*)
       USER_SSL_NGINX_SIZES="${1#*=}"
+      shift
+      ;;
+    --ssl-nginx-sslsniff-args)
+      USER_SSL_NGINX_SSLSNIFF_ARGS="${2:?missing value for --ssl-nginx-sslsniff-args}"
+      SSL_NGINX_SSLSNIFF_ARGS_IS_SET=1
+      shift 2
+      ;;
+    --ssl-nginx-sslsniff-args=*)
+      USER_SSL_NGINX_SSLSNIFF_ARGS="${1#*=}"
+      SSL_NGINX_SSLSNIFF_ARGS_IS_SET=1
       shift
       ;;
     --only)
@@ -320,6 +339,7 @@ fi
 REPO="$(realpath "$REPO")"
 OUT="${OUT:-$REPO/benchmark-results-arm64-$TS}"
 OUT="$(realpath -m "$OUT")"
+RUN_MARKER="$OUT/.benchmark-start"
 
 case "$MODE" in
   full|smoke) ;;
@@ -336,12 +356,19 @@ else
   SSL_NGINX_SIZES="${USER_SSL_NGINX_SIZES:-16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb}"
 fi
 
+if [[ "$(uname -m)" == "aarch64" && "$RUN_SSL_NGINX" == "1" && "$SSL_NGINX_SSLSNIFF_ARGS_IS_SET" == "0" ]]; then
+  USER_SSL_NGINX_SSLSNIFF_ARGS="--no-gnutls --no-nss -c nginx"
+fi
+SSL_NGINX_SSLSNIFF_ARGS="$USER_SSL_NGINX_SSLSNIFF_ARGS"
+export SSL_NGINX_SSLSNIFF_ARGS
+
 if [[ "$(uname -m)" == "aarch64" && "$RUN_SYSCALL" == "1" && "$ONLY_BENCH" != "syscall" ]]; then
   RUN_SYSCALL=0
   AUTO_SKIPPED_ARM64_SYSCALL=1
 fi
 
 mkdir -p "$OUT"
+touch "$RUN_MARKER"
 
 log() {
   echo "[$(date '+%F %T')] $*" | tee -a "$OUT/run.log"
@@ -377,26 +404,31 @@ collect_outputs() {
     if [[ "$RUN_UPROBE" == "1" && -d benchmark/uprobe ]]; then
       find benchmark/uprobe -maxdepth 4 -type f \
         \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
+        -newer "$RUN_MARKER" \
         -print
     fi
     if [[ "$RUN_SYSCALL" == "1" && -d benchmark/syscall ]]; then
       find benchmark/syscall -maxdepth 4 -type f \
         \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
+        -newer "$RUN_MARKER" \
         -print
     fi
     if [[ "$RUN_SYSCOUNT" == "1" && -d benchmark/syscount-nginx ]]; then
       find benchmark/syscount-nginx -maxdepth 4 -type f \
         \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
+        -newer "$RUN_MARKER" \
         -print
     fi
     if [[ "$RUN_SSL_NGINX" == "1" && -d benchmark/ssl-nginx ]]; then
       find benchmark/ssl-nginx -maxdepth 4 -type f \
         \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
+        -newer "$RUN_MARKER" \
         -print
     fi
     if [[ "$RUN_MPK" == "1" && -d benchmark/mpk ]]; then
       find benchmark/mpk -maxdepth 4 -type f \
         \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
+        -newer "$RUN_MARKER" \
         -print
     fi
   ) >"$OUT/benchmark-files.txt" 2>/dev/null || true
@@ -597,6 +629,7 @@ log "Selected benchmarks: uprobe=$RUN_UPROBE syscall=$RUN_SYSCALL syscount-nginx
 log "UPROBE_ITER: $UPROBE_ITER"
 log "UPROBE_TEST_ITER: $UPROBE_TEST_ITER"
 log "SSL_NGINX_SIZES: $SSL_NGINX_SIZES"
+log "SSL_NGINX_SSLSNIFF_ARGS: ${SSL_NGINX_SSLSNIFF_ARGS:-<default sslsniff args>}"
 
 if [[ ! -d "$REPO" ]]; then
   log "ERROR: repository path does not exist: $REPO"
@@ -735,7 +768,7 @@ if [[ "$RUN_SYSCOUNT" == "1" ]]; then
 fi
 
 if [[ "$RUN_SSL_NGINX" == "1" ]]; then
-  run_step ssl_nginx env SSL_NGINX_SIZES="$SSL_NGINX_SIZES" python3 benchmark/ssl-nginx/draw_figture.py
+  run_step ssl_nginx env SSL_NGINX_SIZES="$SSL_NGINX_SIZES" SSL_NGINX_SSLSNIFF_ARGS="$SSL_NGINX_SSLSNIFF_ARGS" python3 benchmark/ssl-nginx/draw_figture.py
   cleanup_bpftime
 fi
 

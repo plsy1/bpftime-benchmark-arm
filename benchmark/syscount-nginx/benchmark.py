@@ -8,6 +8,7 @@ import statistics
 import signal
 import sys
 import traceback
+import platform
 from datetime import datetime
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -15,14 +16,24 @@ import numpy as np
 import matplotlib as mpl
 
 # Configuration
-NUM_RUNS = 10
+NUM_RUNS = int(os.environ.get("SYSCOUNT_NGINX_NUM_RUNS", "10"))
 NGINX_PORT = os.environ.get("SYSCOUNT_NGINX_PORT", "1801")
-WRK_CMD = ["wrk", f"http://127.0.0.1:{NGINX_PORT}/index.html", "-c", "10", "-d", "10"]
+WRK_CONNECTIONS = os.environ.get("SYSCOUNT_NGINX_WRK_CONNECTIONS", "10")
+WRK_DURATION = os.environ.get("SYSCOUNT_NGINX_WRK_DURATION", "10")
+WRK_TIMEOUT = int(os.environ.get("SYSCOUNT_NGINX_WRK_TIMEOUT", "15"))
+SYSCOUNT_DURATION = os.environ.get("SYSCOUNT_NGINX_DURATION", "20")
+SYSCOUNT_TIMEOUT = int(os.environ.get("SYSCOUNT_NGINX_TIMEOUT", str(int(SYSCOUNT_DURATION) + 5)))
+SYSCOUNT_STARTUP_DELAY = float(os.environ.get("SYSCOUNT_NGINX_STARTUP_DELAY", "2"))
+WRK_CMD = ["wrk", f"http://127.0.0.1:{NGINX_PORT}/index.html", "-c", WRK_CONNECTIONS, "-d", WRK_DURATION]
 NGINX_CMD = ["nginx", "-c", "nginx.conf", "-p", "benchmark/syscount-nginx"]
 TEST_URL = f"http://127.0.0.1:{NGINX_PORT}/index.html"
 SYSCOUNT_PATH = "example/tracing/syscount/syscount"
 AGENT_PATH = "build/runtime/agent/libbpftime-agent.so"
 SYSCALL_SERVER_PATH = "build/runtime/syscall-server/libbpftime-syscall-server.so"
+TRACE_LOG_ROOT = Path(os.environ.get(
+    "SYSCOUNT_NGINX_TRACE_LOG_DIR",
+    f"benchmark/syscount-nginx/trace_logs/{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+))
 
 # Result storage
 results = {
@@ -31,6 +42,27 @@ results = {
     "kernel_untargeted": [],    # Kernel syscount not targeting nginx
     "userbpf_targeted": [],     # Userspace syscount targeting nginx pid
     "userbpf_untargeted": [],   # Userspace syscount not targeting nginx
+}
+run_stats = {
+    name: {
+        "target_runs": NUM_RUNS,
+        "valid_runs": 0,
+        "failed_attempts": 0,
+        "trace_failures": 0,
+        "wrk_failures": 0,
+        "parse_failures": 0,
+        "timeouts": 0,
+        "exceptions": 0,
+        "skipped": False,
+        "skip_reason": "",
+    }
+    for name in results
+}
+trace_observability = {
+    "kernel_targeted": [],
+    "kernel_untargeted": [],
+    "userbpf_targeted": [],
+    "userbpf_untargeted": [],
 }
 
 # Define a signal handler to prevent unexpected termination
@@ -46,6 +78,105 @@ def debug_print(message):
     """Print debug messages with timestamp"""
     timestamp = datetime.now().strftime("%H:%M:%S")
     print(f"[DEBUG {timestamp}] {message}")
+
+def mark_valid(test_name):
+    run_stats[test_name]["valid_runs"] += 1
+
+def mark_failed(test_name, reason):
+    run_stats[test_name]["failed_attempts"] += 1
+    if reason in run_stats[test_name]:
+        run_stats[test_name][reason] += 1
+
+def mark_skipped(test_name, reason):
+    run_stats[test_name]["skipped"] = True
+    run_stats[test_name]["skip_reason"] = reason
+
+def bpftime_syscall_supported():
+    if os.environ.get("SYSCOUNT_NGINX_FORCE_BPFTIME_SYSCALL", ""):
+        return True
+    return platform.machine().lower() not in ("aarch64", "arm64")
+
+def open_trace_logs(test_name, run_index):
+    TRACE_LOG_ROOT.mkdir(parents=True, exist_ok=True)
+    suffix = f"run{run_index + 1:02d}"
+    stdout_path = TRACE_LOG_ROOT / f"{test_name}_{suffix}.stdout.log"
+    stderr_path = TRACE_LOG_ROOT / f"{test_name}_{suffix}.stderr.log"
+    stdout_file = stdout_path.open("w")
+    stderr_file = stderr_path.open("w")
+    return stdout_path, stderr_path, stdout_file, stderr_file
+
+def summarize_syscount_log(test_name, run_index, stdout_path, stderr_path, returncode, require_counts):
+    stdout_text = stdout_path.read_text(errors="replace") if stdout_path.exists() else ""
+    stderr_text = stderr_path.read_text(errors="replace") if stderr_path.exists() else ""
+    hard_error_markers = [
+        marker for marker in (
+            "failed to open BPF object",
+            "failed to load BPF object",
+            "failed to attach sys_exit program",
+            "failed to attach sys_enter programs",
+            "libbpf: failed",
+            "ERROR:",
+            "Error:",
+        )
+        if marker in stdout_text or marker in stderr_text
+    ]
+    count_rows = []
+    in_count_table = False
+    for line in stdout_text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            in_count_table = False
+            continue
+        if "COUNT" in stripped and ("SYSCALL" in stripped or "PID" in stripped):
+            in_count_table = True
+            continue
+        if in_count_table:
+            parts = stripped.split()
+            if parts and parts[-1].isdigit():
+                count_rows.append(stripped)
+
+    started = "Tracing syscalls" in stdout_text
+    trace_success = started and not hard_error_markers and (not require_counts or bool(count_rows))
+    summary = {
+        "run": run_index + 1,
+        "stdout_path": str(stdout_path),
+        "stderr_path": str(stderr_path),
+        "returncode": returncode,
+        "started": started,
+        "require_counts": require_counts,
+        "count_rows": len(count_rows),
+        "trace_success": trace_success,
+        "error_markers": hard_error_markers,
+        "stdout_bytes": stdout_path.stat().st_size if stdout_path.exists() else 0,
+        "stderr_bytes": stderr_path.stat().st_size if stderr_path.exists() else 0,
+    }
+    trace_observability[test_name].append(summary)
+    debug_print(
+        f"{test_name} run {run_index + 1}: trace_success={trace_success} "
+        f"started={started} count_rows={len(count_rows)} returncode={returncode} "
+        f"stdout={stdout_path} stderr={stderr_path}"
+    )
+    return summary
+
+def terminate_and_summarize_syscount(test_name, run_index, proc, trace_files, require_counts):
+    stdout_path, stderr_path, stdout_file, stderr_file = trace_files
+    returncode = None
+    if proc is not None:
+        try:
+            proc.wait(timeout=SYSCOUNT_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            mark_failed(test_name, "timeouts")
+            debug_print("syscount didn't finish within expected time, terminating...")
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.wait(timeout=5)
+        returncode = proc.poll()
+    stdout_file.close()
+    stderr_file.close()
+    return summarize_syscount_log(test_name, run_index, stdout_path, stderr_path, returncode, require_counts)
 
 def remove_access_log():
     """Remove the nginx access log file"""
@@ -250,10 +381,11 @@ def run_native():
             
             # Run wrk
             try:
-                result = subprocess.run(WRK_CMD, capture_output=True, text=True, timeout=15)
+                result = subprocess.run(WRK_CMD, capture_output=True, text=True, timeout=WRK_TIMEOUT)
                 debug_print(f"wrk exit code: {result.returncode}")
                 
                 if result.returncode != 0:
+                    mark_failed("native", "wrk_failures")
                     debug_print(f"wrk failed with exit code {result.returncode}")
                     debug_print(f"stdout: {result.stdout}")
                     debug_print(f"stderr: {result.stderr}")
@@ -262,12 +394,16 @@ def run_native():
                 req_per_sec = parse_wrk_output(result.stdout)
                 if req_per_sec:
                     results["native"].append(req_per_sec)
+                    mark_valid("native")
                     print(f"  Requests/sec: {req_per_sec:.2f}")
                 else:
+                    mark_failed("native", "parse_failures")
                     debug_print(f"Failed to parse output: {result.stdout}")
             except subprocess.TimeoutExpired:
+                mark_failed("native", "timeouts")
                 debug_print("wrk command timed out")
             except Exception as e:
+                mark_failed("native", "exceptions")
                 debug_print(f"Error running wrk: {e}")
                 traceback.print_exc()
     
@@ -292,7 +428,7 @@ def run_kernel_syscount(target_pid=None):
     """
     Run kernel syscount benchmarks
     If target_pid is provided, syscount will target that PID
-    Otherwise, it will track all processes
+    Otherwise, it will target a non-nginx PID while wrk measures nginx
     """
     test_name = "kernel_targeted" if target_pid else "kernel_untargeted"
     print(f"\n=== Running Kernel syscount Tests ({test_name}) ===")
@@ -317,44 +453,72 @@ def run_kernel_syscount(target_pid=None):
                 continue
             
             # Start syscount
-            syscount_cmd = ["sudo", SYSCOUNT_PATH, "-d", "20"]
+            syscount_cmd = ["sudo", SYSCOUNT_PATH, "-d", SYSCOUNT_DURATION]
             if target_pid:
                 syscount_cmd.extend(["-p", nginx_pid])
             else:
-                # target another random pid
+                # Match the original benchmark design: syscount does not target nginx.
                 syscount_cmd.extend(["-p", "1"])
             
             debug_print(f"Starting kernel syscount: {' '.join(syscount_cmd)}")
+            syscount_proc = None
+            trace_files = None
+            req_per_sec = None
             try:
+                trace_files = open_trace_logs(test_name, i)
+                stdout_path, stderr_path, stdout_file, stderr_file = trace_files
                 syscount_proc = subprocess.Popen(
                     syscount_cmd, 
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    stdout=stdout_file,
+                    stderr=stderr_file,
                 )
-                time.sleep(2)  # Give syscount time to start
+                time.sleep(SYSCOUNT_STARTUP_DELAY)  # Give syscount time to start
+                if syscount_proc.poll() is not None:
+                    debug_print(f"kernel syscount exited before wrk. Exit code: {syscount_proc.returncode}")
+                    mark_failed(test_name, "trace_failures")
+                    continue
                 
                 # Run wrk
                 debug_print(f"Running wrk with command: {' '.join(WRK_CMD)}")
-                result = subprocess.run(WRK_CMD, capture_output=True, text=True, timeout=15)
+                result = subprocess.run(WRK_CMD, capture_output=True, text=True, timeout=WRK_TIMEOUT)
+                debug_print(f"wrk exit code: {result.returncode}")
+                if result.returncode != 0:
+                    mark_failed(test_name, "wrk_failures")
+                    debug_print(f"wrk failed stdout: {result.stdout}")
+                    debug_print(f"wrk failed stderr: {result.stderr}")
+                    continue
                 req_per_sec = parse_wrk_output(result.stdout)
                 
-                if req_per_sec:
-                    results[test_name].append(req_per_sec)
-                    print(f"  Requests/sec: {req_per_sec:.2f}")
-                else:
+                if not req_per_sec:
+                    mark_failed(test_name, "parse_failures")
                     debug_print(f"Failed to parse output: {result.stdout}")
-                
-                # Wait for syscount to finish
-                try:
-                    debug_print("Waiting for syscount to finish...")
-                    syscount_proc.wait(timeout=25)  # Give 5 seconds more than duration
-                except subprocess.TimeoutExpired:
-                    debug_print("syscount didn't finish within expected time, terminating...")
-                    subprocess.run(["sudo", "pkill", "-f", "syscount"], stderr=subprocess.DEVNULL)
                     
+            except subprocess.TimeoutExpired:
+                mark_failed(test_name, "timeouts")
+                debug_print("wrk command timed out")
             except Exception as e:
+                mark_failed(test_name, "exceptions")
                 debug_print(f"Error in kernel syscount run: {e}")
                 traceback.print_exc()
+            finally:
+                if trace_files is not None:
+                    debug_print("Waiting for syscount to finish...")
+                    summary = terminate_and_summarize_syscount(
+                        test_name,
+                        i,
+                        syscount_proc,
+                        trace_files,
+                        require_counts=bool(target_pid),
+                    )
+                    if req_per_sec:
+                        if summary["trace_success"]:
+                            results[test_name].append(req_per_sec)
+                            mark_valid(test_name)
+                            print(f"  Requests/sec: {req_per_sec:.2f}")
+                        else:
+                            mark_failed(test_name, "trace_failures")
+                            debug_print("kernel syscount trace was not effective; run is not counted")
+                cleanup_processes()
     
     except Exception as e:
         debug_print(f"Error in kernel syscount test: {e}")
@@ -377,10 +541,19 @@ def run_userbpf_syscount(target_pid=None):
     """
     Run userspace BPF syscount benchmarks
     If target_pid is provided, syscount will target that PID
-    Otherwise, it will track all processes
+    Otherwise, it will target a non-nginx PID while wrk measures nginx
     """
     test_name = "userbpf_targeted" if target_pid else "userbpf_untargeted"
     print(f"\n=== Running UserBPF syscount Tests ({test_name}) ===")
+
+    if not bpftime_syscall_supported():
+        reason = (
+            "bpftime syscall instrumentation is not supported on this arm64/aarch64 "
+            "platform; syscount would start but no syscall events are expected"
+        )
+        mark_skipped(test_name, reason)
+        debug_print(f"Skipping {test_name}: {reason}")
+        return
     
     # Check if required files exist
     if not check_file_exists(SYSCOUNT_PATH) or not check_file_exists(AGENT_PATH) or not check_file_exists(SYSCALL_SERVER_PATH):
@@ -389,7 +562,11 @@ def run_userbpf_syscount(target_pid=None):
     
     for i in range(NUM_RUNS):
         print(f"Run {i+1}/{NUM_RUNS}...")
-        
+
+        nginx_proc = None
+        syscount_proc = None
+        trace_files = None
+        req_per_sec = None
         try:
             # Start nginx with bpftime
             debug_print("Starting nginx with bpftime")
@@ -427,58 +604,84 @@ def run_userbpf_syscount(target_pid=None):
                 continue
             
             # Start syscount with bpftime
-            syscount_cmd = [SYSCOUNT_PATH, "-d", "20"]
+            syscall_server_path = os.path.abspath(SYSCALL_SERVER_PATH)
+            syscount_path = os.path.abspath(SYSCOUNT_PATH)
+            syscount_cmd = [
+                "sudo",
+                "env",
+                f"LD_PRELOAD={syscall_server_path}",
+                syscount_path,
+                "-d",
+                SYSCOUNT_DURATION,
+            ]
             if target_pid:
                 syscount_cmd.extend(["-p", nginx_pid])
-            elif not target_pid:
-                # target another random pid
+            else:
+                # Match the original benchmark design: syscount does not target nginx.
                 syscount_cmd.extend(["-p", "1"])
             debug_print(f"Starting syscount with bpftime: {' '.join(syscount_cmd)}")
-            env = os.environ.copy()
-            env["LD_PRELOAD"] = SYSCALL_SERVER_PATH
-            
+            trace_files = open_trace_logs(test_name, i)
+            stdout_path, stderr_path, stdout_file, stderr_file = trace_files
             syscount_proc = subprocess.Popen(
                 syscount_cmd,
-                env=env,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stdout=stdout_file,
+                stderr=stderr_file,
             )
-            time.sleep(2)  # Give syscount time to start
+            time.sleep(SYSCOUNT_STARTUP_DELAY)  # Give syscount time to start
+            if syscount_proc.poll() is not None:
+                debug_print(f"userbpf syscount exited before wrk. Exit code: {syscount_proc.returncode}")
+                mark_failed(test_name, "trace_failures")
+                continue
             
             # Run wrk
             debug_print(f"Running wrk with command: {' '.join(WRK_CMD)}")
-            result = subprocess.run(WRK_CMD, capture_output=True, text=True, timeout=15)
+            result = subprocess.run(WRK_CMD, capture_output=True, text=True, timeout=WRK_TIMEOUT)
+            debug_print(f"wrk exit code: {result.returncode}")
+            if result.returncode != 0:
+                mark_failed(test_name, "wrk_failures")
+                debug_print(f"wrk failed stdout: {result.stdout}")
+                debug_print(f"wrk failed stderr: {result.stderr}")
+                continue
             req_per_sec = parse_wrk_output(result.stdout)
             
-            if req_per_sec:
-                results[test_name].append(req_per_sec)
-                print(f"  Requests/sec: {req_per_sec:.2f}")
-            else:
+            if not req_per_sec:
+                mark_failed(test_name, "parse_failures")
                 debug_print(f"Failed to parse output: {result.stdout}")
-            
-            # Wait for syscount to finish
-            try:
-                debug_print("Waiting for syscount to finish...")
-                syscount_proc.wait(timeout=25)  # Give 5 seconds more than duration
-            except subprocess.TimeoutExpired:
-                debug_print("syscount didn't finish within expected time, terminating...")
-                syscount_proc.terminate()
                 
+        except subprocess.TimeoutExpired:
+            mark_failed(test_name, "timeouts")
+            debug_print("wrk command timed out")
         except Exception as e:
+            mark_failed(test_name, "exceptions")
             debug_print(f"Error in userspace BPF syscount run: {e}")
             traceback.print_exc()
         finally:
             # Cleanup
             debug_print("Terminating processes")
             try:
-                if 'nginx_proc' in locals():
+                if nginx_proc is not None:
                     nginx_proc.terminate()
                     nginx_proc.wait(timeout=5)
-                if 'syscount_proc' in locals():
-                    syscount_proc.terminate()
-                    syscount_proc.wait(timeout=5)
             except Exception as e:
                 debug_print(f"Error terminating processes: {e}")
+
+            if trace_files is not None:
+                debug_print("Waiting for syscount to finish...")
+                summary = terminate_and_summarize_syscount(
+                    test_name,
+                    i,
+                    syscount_proc,
+                    trace_files,
+                    require_counts=bool(target_pid),
+                )
+                if req_per_sec:
+                    if summary["trace_success"]:
+                        results[test_name].append(req_per_sec)
+                        mark_valid(test_name)
+                        print(f"  Requests/sec: {req_per_sec:.2f}")
+                    else:
+                        mark_failed(test_name, "trace_failures")
+                        debug_print("userbpf syscount trace was not effective; run is not counted")
             
             cleanup_processes()
 
@@ -500,8 +703,28 @@ def print_statistics():
     avgs = {}
     
     for test_name, values in results.items():
+        stats = run_stats[test_name]
+        print(f"\n{name_map.get(test_name, test_name)}:")
+        if stats.get("skipped"):
+            print(f"  Skipped:               {stats['skip_reason']}")
+            continue
+        print(f"  Valid runs:            {stats['valid_runs']}/{stats['target_runs']}")
+        print(f"  Failed attempts:       {stats['failed_attempts']}")
+        breakdown = [
+            f"{reason}={stats[reason]}"
+            for reason in (
+                "trace_failures",
+                "wrk_failures",
+                "parse_failures",
+                "timeouts",
+                "exceptions",
+            )
+            if stats.get(reason, 0)
+        ]
+        if breakdown:
+            print(f"  Failure breakdown:     {', '.join(breakdown)}")
         if not values:
-            print(f"\n{name_map.get(test_name, test_name)}: No valid results")
+            print("  No valid results")
             continue
             
         avg = statistics.mean(values)
@@ -511,7 +734,6 @@ def print_statistics():
         min_val = min(values)
         max_val = max(values)
         
-        print(f"\n{name_map.get(test_name, test_name)}:")
         print(f"  Requests/sec (mean):   {avg:.2f}")
         print(f"  Requests/sec (median): {median:.2f}")
         print(f"  Standard deviation:    {stdev:.2f}")
@@ -540,7 +762,19 @@ def print_statistics():
         kernel_avg = avgs["kernel_untargeted"]
         userbpf_avg = avgs["userbpf_untargeted"]
         improvement = ((userbpf_avg - kernel_avg) / kernel_avg) * 100
-        print(f"UserBPF improvement over kernel (untargeted): {improvement:.2f}%")
+        print(f"UserBPF improvement over kernel (not targeting nginx): {improvement:.2f}%")
+
+    print("\nTrace observability:")
+    for test_name, summaries in trace_observability.items():
+        if not summaries:
+            print(f"  {test_name}: no trace logs")
+            continue
+        trace_ok = sum(1 for item in summaries if item["trace_success"])
+        count_rows = sum(item["count_rows"] for item in summaries)
+        print(
+            f"  {test_name}: trace_success={trace_ok}/{len(summaries)} "
+            f"count_rows={count_rows} logs={TRACE_LOG_ROOT}"
+        )
     
     return avgs
 
@@ -553,6 +787,15 @@ def save_results():
         json.dump({
             "timestamp": timestamp,
             "runs": NUM_RUNS,
+            "config": {
+                "wrk_cmd": WRK_CMD,
+                "wrk_timeout": WRK_TIMEOUT,
+                "syscount_duration": SYSCOUNT_DURATION,
+                "syscount_timeout": SYSCOUNT_TIMEOUT,
+                "trace_log_root": str(TRACE_LOG_ROOT),
+            },
+            "stats": run_stats,
+            "trace_observability": trace_observability,
             "results": results
         }, f, indent=2)
     
@@ -599,7 +842,7 @@ def generate_report(avgs, result_filename, timestamp):
         "# Benchmark Report: syscount-nginx Performance Analysis",
         "",
         "## Overview",
-        "This report analyzes the performance of nginx under different syscall counting methods, comparing native execution (no tracing), kernel-based syscount (both targeted and untargeted), and bpftime's userspace BPF implementation (both targeted and untargeted).",
+        "This report analyzes the performance of nginx under different syscall counting methods, comparing native execution (no tracing), kernel-based syscount (targeting nginx and not targeting nginx), and bpftime's userspace BPF implementation (targeting nginx and not targeting nginx).",
         "",
         "## Test Environment",
         f"- **Test Date**: {timestamp[:4]}-{timestamp[4:6]}-{timestamp[6:8]}",
@@ -673,7 +916,7 @@ def generate_report(avgs, result_filename, timestamp):
         else:
             report.append(f"   - When not targeting nginx, UserBPF showed {-comparisons['userbpf_vs_kernel_untargeted']:.2f}% worse performance than the kernel equivalent.")
     
-    # Add targeted vs untargeted comparison
+    # Add targeted vs not-targeting-nginx comparison
     report.extend([
         "",
         "3. **Targeted vs. Untargeted Performance**"
@@ -682,16 +925,16 @@ def generate_report(avgs, result_filename, timestamp):
     if "kernel_targeted" in avgs and "kernel_untargeted" in avgs:
         pct_diff = ((avgs["kernel_untargeted"] - avgs["kernel_targeted"]) / avgs["kernel_targeted"]) * 100
         if pct_diff > 0:
-            report.append(f"   - For kernel-based tracing, the untargeted mode performed {pct_diff:.2f}% better than targeted mode.")
+            report.append(f"   - For kernel-based tracing, the not-targeting-nginx mode performed {pct_diff:.2f}% better than targeted mode.")
         else:
-            report.append(f"   - For kernel-based tracing, the targeted mode performed {-pct_diff:.2f}% better than untargeted mode.")
+            report.append(f"   - For kernel-based tracing, the targeted mode performed {-pct_diff:.2f}% better than not-targeting-nginx mode.")
     
     if "userbpf_targeted" in avgs and "userbpf_untargeted" in avgs:
         pct_diff = ((avgs["userbpf_untargeted"] - avgs["userbpf_targeted"]) / avgs["userbpf_targeted"]) * 100
         if pct_diff > 0:
-            report.append(f"   - For UserBPF, the untargeted mode performed {pct_diff:.2f}% better than targeted mode.")
+            report.append(f"   - For UserBPF, the not-targeting-nginx mode performed {pct_diff:.2f}% better than targeted mode.")
         else:
-            report.append(f"   - For UserBPF, the targeted mode performed {-pct_diff:.2f}% better than untargeted mode.")
+            report.append(f"   - For UserBPF, the targeted mode performed {-pct_diff:.2f}% better than not-targeting-nginx mode.")
     
     # Add conclusion
     report.extend([
@@ -812,7 +1055,7 @@ def generate_chart(avgs, timestamp):
             
             if k_untarg > 0 and u_untarg > 0:
                 pct_diff = ((u_untarg - k_untarg) / k_untarg) * 100
-                plt.annotate(f'{pct_diff:+.2f}% vs Kernel(untargeted)', 
+                plt.annotate(f'{pct_diff:+.2f}% vs Kernel(not targeting nginx)', 
                             xy=(4, metrics[4] - metrics[4]*0.15), 
                             ha='center', va='top',
                             fontsize=9, color='darkgreen',
@@ -926,7 +1169,10 @@ def main():
             print(f"Report: {report_path}")
             print(f"Chart: {chart_path}")
 
-        missing_results = [name for name, values in results.items() if not values]
+        missing_results = [
+            name for name, values in results.items()
+            if not values and not run_stats[name].get("skipped")
+        ]
         if missing_results:
             debug_print(f"ERROR: missing valid results for: {', '.join(missing_results)}")
             sys.exit(1)

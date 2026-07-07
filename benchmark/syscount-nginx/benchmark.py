@@ -8,7 +8,6 @@ import statistics
 import signal
 import sys
 import traceback
-import platform
 from datetime import datetime
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -31,7 +30,6 @@ NGINX_CMD = [NGINX_BIN, "-c", "nginx.conf", "-p", "benchmark/syscount-nginx"]
 TEST_URL = f"http://127.0.0.1:{NGINX_PORT}/index.html"
 SYSCOUNT_PATH = "example/tracing/syscount/syscount"
 AGENT_PATH = "build/runtime/agent/libbpftime-agent.so"
-AGENT_TRANSFORMER_PATH = "build/attach/text_segment_transformer/libbpftime-agent-transformer.so"
 SYSCALL_SERVER_PATH = "build/runtime/syscall-server/libbpftime-syscall-server.so"
 TRACE_LOG_ROOT = Path(os.environ.get(
     "SYSCOUNT_NGINX_TRACE_LOG_DIR",
@@ -93,19 +91,6 @@ def mark_failed(test_name, reason):
 def mark_skipped(test_name, reason):
     run_stats[test_name]["skipped"] = True
     run_stats[test_name]["skip_reason"] = reason
-
-def bpftime_syscall_supported():
-    if os.environ.get("SYSCOUNT_NGINX_FORCE_BPFTIME_SYSCALL", ""):
-        return True
-    return platform.machine().lower() not in ("aarch64", "arm64")
-
-def bpftime_target_needs_sudo():
-    value = os.environ.get("SYSCOUNT_NGINX_BPFTIME_TARGET_SUDO", "auto").lower()
-    if value in ("1", "true", "yes", "on"):
-        return True
-    if value in ("0", "false", "no", "off"):
-        return False
-    return bpftime_syscall_supported()
 
 def open_trace_logs(test_name, run_index):
     TRACE_LOG_ROOT.mkdir(parents=True, exist_ok=True)
@@ -575,10 +560,6 @@ def run_userbpf_syscount(target_pid=None):
     if not check_file_exists(SYSCOUNT_PATH) or not check_file_exists(AGENT_PATH) or not check_file_exists(SYSCALL_SERVER_PATH):
         debug_print("Skipping userspace BPF syscount tests: required files not found")
         return
-    use_syscall_transformer = bpftime_syscall_supported()
-    if use_syscall_transformer and not check_file_exists(AGENT_TRANSFORMER_PATH):
-        debug_print("Skipping userspace BPF syscount tests: syscall transformer not found")
-        return
     
     for i in range(NUM_RUNS):
         print(f"Run {i+1}/{NUM_RUNS}...")
@@ -600,60 +581,19 @@ def run_userbpf_syscount(target_pid=None):
             prepare_nginx_prefix(abs_nginx_dir)
             modified_nginx_cmd = [NGINX_BIN, "-c", abs_nginx_conf, "-p", abs_nginx_dir]
 
-            # Start syscount with bpftime first; the target agent opens shared
-            # memory created by this loader process.
-            syscall_server_path = os.path.abspath(SYSCALL_SERVER_PATH)
-            syscount_path = os.path.abspath(SYSCOUNT_PATH)
-            syscount_cmd = [
-                "sudo",
-                "env",
-                f"LD_PRELOAD={syscall_server_path}",
-                syscount_path,
-                "-d",
-                SYSCOUNT_DURATION,
-            ]
-            if not target_pid:
-                # Match the original benchmark design: syscount does not target nginx.
-                syscount_cmd.extend(["-p", "1"])
-            debug_print(f"Starting syscount with bpftime: {' '.join(syscount_cmd)}")
-            trace_files = open_trace_logs(test_name, i)
-            stdout_path, stderr_path, stdout_file, stderr_file = trace_files
-            syscount_proc = subprocess.Popen(
-                syscount_cmd,
-                stdout=stdout_file,
-                stderr=stderr_file,
-            )
-            time.sleep(SYSCOUNT_STARTUP_DELAY)  # Give syscount time to start
-            if syscount_proc.poll() is not None:
-                debug_print(f"userbpf syscount exited before wrk. Exit code: {syscount_proc.returncode}")
-                mark_failed(test_name, "trace_failures")
-                continue
-
             env = os.environ.copy()
             nginx_label = "nginx"
             if target_pid:
                 nginx_label = "nginx with bpftime"
-                if use_syscall_transformer:
-                    env["AGENT_SO"] = os.path.abspath(AGENT_PATH)
-                    env["LD_PRELOAD"] = os.path.abspath(AGENT_TRANSFORMER_PATH)
-                else:
-                    env["LD_PRELOAD"] = AGENT_PATH
+                env["LD_PRELOAD"] = os.path.abspath(AGENT_PATH)
 
             debug_print(f"Starting {nginx_label}: {' '.join(modified_nginx_cmd)}")
-            if target_pid and use_syscall_transformer and bpftime_target_needs_sudo():
-                sudo_env = ["sudo", "env", f"AGENT_SO={env['AGENT_SO']}", f"LD_PRELOAD={env['LD_PRELOAD']}"]
-                nginx_proc = subprocess.Popen(
-                    [*sudo_env, *modified_nginx_cmd],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
-            else:
-                nginx_proc = subprocess.Popen(
-                    modified_nginx_cmd,
-                    env=env if target_pid else None,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                )
+            nginx_proc = subprocess.Popen(
+                modified_nginx_cmd,
+                env=env if target_pid else None,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
             time.sleep(2)  # Give nginx time to start
 
             if nginx_proc.poll() is not None:
@@ -662,6 +602,42 @@ def run_userbpf_syscount(target_pid=None):
                 debug_print(f"stdout: {stdout.decode() if stdout else 'None'}")
                 debug_print(f"stderr: {stderr.decode() if stderr else 'None'}")
                 mark_failed(test_name, "exceptions")
+                continue
+
+            nginx_pid = subprocess.run(["pgrep", "-f", "nginx -c"], capture_output=True, text=True).stdout.strip()
+            debug_print(f"nginx PID: {nginx_pid}")
+            if target_pid and not nginx_pid:
+                debug_print("nginx PID not found, skipping syscount")
+                mark_failed(test_name, "exceptions")
+                continue
+
+            syscall_server_path = os.path.abspath(SYSCALL_SERVER_PATH)
+            syscount_path = os.path.abspath(SYSCOUNT_PATH)
+            syscount_cmd = [
+                syscount_path,
+                "-d",
+                SYSCOUNT_DURATION,
+            ]
+            if target_pid:
+                syscount_cmd.extend(["-p", nginx_pid])
+            else:
+                # Match the original benchmark design: syscount does not target nginx.
+                syscount_cmd.extend(["-p", "1"])
+            debug_print(f"Starting syscount with bpftime: {' '.join(syscount_cmd)}")
+            trace_files = open_trace_logs(test_name, i)
+            stdout_path, stderr_path, stdout_file, stderr_file = trace_files
+            syscount_env = os.environ.copy()
+            syscount_env["LD_PRELOAD"] = syscall_server_path
+            syscount_proc = subprocess.Popen(
+                syscount_cmd,
+                env=syscount_env,
+                stdout=stdout_file,
+                stderr=stderr_file,
+            )
+            time.sleep(SYSCOUNT_STARTUP_DELAY)  # Give syscount time to start
+            if syscount_proc.poll() is not None:
+                debug_print(f"userbpf syscount exited before wrk. Exit code: {syscount_proc.returncode}")
+                mark_failed(test_name, "trace_failures")
                 continue
             
             # Run wrk

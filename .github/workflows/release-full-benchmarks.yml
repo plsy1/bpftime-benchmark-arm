@@ -1,0 +1,122 @@
+name: Release Full Benchmarks
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Existing release tag to upload benchmark assets to"
+        required: true
+      uprobe_iter:
+        description: "Outer iterations for uprobe"
+        required: false
+        default: "10"
+      uprobe_test_iter:
+        description: "Inner iterations for uprobe"
+        required: false
+        default: "100000"
+      ssl_sizes:
+        description: "Comma-separated ssl-nginx payload sizes"
+        required: false
+        default: "16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb"
+
+permissions:
+  contents: write
+
+jobs:
+  full-benchmark:
+    name: ${{ matrix.arch }} ${{ matrix.benchmark }} full
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            benchmark: uprobe
+            output: benchmark-results-arm64-uprobe-full
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            benchmark: syscount-nginx
+            output: benchmark-results-arm64-syscount-nginx-full
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            benchmark: ssl-nginx
+            output: benchmark-results-arm64-ssl-nginx-full
+          - arch: x64
+            runner: ubuntu-24.04
+            benchmark: uprobe
+            output: benchmark-results-x64-uprobe-full
+          - arch: x64
+            runner: ubuntu-24.04
+            benchmark: syscall
+            output: benchmark-results-x64-syscall-full
+          - arch: x64
+            runner: ubuntu-24.04
+            benchmark: syscount-nginx
+            output: benchmark-results-x64-syscount-nginx-full
+          - arch: x64
+            runner: ubuntu-24.04
+            benchmark: ssl-nginx
+            output: benchmark-results-x64-ssl-nginx-full
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show runner information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+          llvm-config --version || true
+          clang --version || true
+
+      - name: Run full benchmark
+        env:
+          BENCHMARK: ${{ matrix.benchmark }}
+          OUTPUT_DIR: ${{ matrix.output }}
+          UPROBE_ITER: ${{ inputs.uprobe_iter || '10' }}
+          UPROBE_TEST_ITER: ${{ inputs.uprobe_test_iter || '100000' }}
+          SSL_SIZES: ${{ inputs.ssl_sizes || '16b,1kb,2kb,4kb,16kb,32kb,64kb,128kb,256kb' }}
+        run: |
+          extra_args=()
+          if [[ "$BENCHMARK" == "uprobe" ]]; then
+            extra_args+=(--uprobe-iter "$UPROBE_ITER")
+            extra_args+=(--uprobe-test-iter "$UPROBE_TEST_ITER")
+          elif [[ "$BENCHMARK" == "ssl-nginx" ]]; then
+            extra_args+=(--ssl-sizes "$SSL_SIZES")
+          fi
+
+          ./run_bpftime_arm64_benchmarks.sh \
+            --install-deps \
+            --build \
+            --mode full \
+            --only "$BENCHMARK" \
+            "${extra_args[@]}" \
+            --output-dir "$PWD/$OUTPUT_DIR"
+
+      - name: Upload benchmark result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output }}
+          path: |
+            ${{ matrix.output }}.tar.gz
+          if-no-files-found: warn
+
+      - name: Upload benchmark result to release
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+          ASSET_PATH: ${{ matrix.output }}.tar.gz
+        run: |
+          if [[ ! -f "$ASSET_PATH" ]]; then
+            echo "No benchmark archive found at $ASSET_PATH"
+            exit 0
+          fi
+          gh release upload "$RELEASE_TAG" "$ASSET_PATH" --clobber

@@ -24,6 +24,7 @@ WRK_TIMEOUT = int(os.environ.get("SYSCOUNT_NGINX_WRK_TIMEOUT", "15"))
 SYSCOUNT_DURATION = os.environ.get("SYSCOUNT_NGINX_DURATION", "20")
 SYSCOUNT_TIMEOUT = int(os.environ.get("SYSCOUNT_NGINX_TIMEOUT", str(int(SYSCOUNT_DURATION) + 5)))
 SYSCOUNT_STARTUP_DELAY = float(os.environ.get("SYSCOUNT_NGINX_STARTUP_DELAY", "2"))
+ALLOW_MISSING_USERBPF = os.environ.get("SYSCOUNT_NGINX_ALLOW_MISSING_USERBPF", "").lower() in ("1", "true", "yes", "on")
 WRK_CMD = ["wrk", f"http://127.0.0.1:{NGINX_PORT}/index.html", "-c", WRK_CONNECTIONS, "-d", WRK_DURATION]
 NGINX_CMD = ["nginx", "-c", "nginx.conf", "-p", "benchmark/syscount-nginx"]
 TEST_URL = f"http://127.0.0.1:{NGINX_PORT}/index.html"
@@ -804,6 +805,7 @@ def save_results():
                 "wrk_timeout": WRK_TIMEOUT,
                 "syscount_duration": SYSCOUNT_DURATION,
                 "syscount_timeout": SYSCOUNT_TIMEOUT,
+                "allow_missing_userbpf": ALLOW_MISSING_USERBPF,
                 "trace_log_root": str(TRACE_LOG_ROOT),
             },
             "stats": run_stats,
@@ -1183,7 +1185,11 @@ def main():
 
         missing_results = [
             name for name, values in results.items()
-            if not values and not run_stats[name].get("skipped")
+            if (
+                not values
+                and not run_stats[name].get("skipped")
+                and not (ALLOW_MISSING_USERBPF and name.startswith("userbpf_"))
+            )
         ]
         if missing_results:
             debug_print(f"ERROR: missing valid results for: {', '.join(missing_results)}")

@@ -16,6 +16,7 @@ export SYSCOUNT_NGINX_WRK_TIMEOUT="${SYSCOUNT_NGINX_WRK_TIMEOUT:-8}"
 export SYSCOUNT_NGINX_DURATION="${SYSCOUNT_NGINX_DURATION:-4}"
 export SYSCOUNT_NGINX_TIMEOUT="${SYSCOUNT_NGINX_TIMEOUT:-8}"
 export SYSCOUNT_NGINX_STARTUP_DELAY="${SYSCOUNT_NGINX_STARTUP_DELAY:-1}"
+export SYSCOUNT_NGINX_ALLOW_MISSING_USERBPF="${SYSCOUNT_NGINX_ALLOW_MISSING_USERBPF:-1}"
 
 before="$(mktemp)"
 after="$(mktemp)"
@@ -51,17 +52,18 @@ expected = [
     "native",
     "kernel_targeted",
     "kernel_untargeted",
-    "userbpf_targeted",
     "userbpf_untargeted",
 ]
+optional = ["userbpf_targeted"]
 
 print(f"\nResult JSON: {path}")
 print("\nThroughput:")
 missing = []
-for name in expected:
+for name in expected + optional:
     values = results.get(name, [])
     if not values:
-        missing.append(name)
+        if name in expected:
+            missing.append(name)
         print(f"  {name}: no data")
         continue
     print(

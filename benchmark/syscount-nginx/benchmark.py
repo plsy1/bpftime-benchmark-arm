@@ -518,8 +518,7 @@ def run_kernel_syscount(target_pid=None):
                         else:
                             mark_failed(test_name, "trace_failures")
                             debug_print("kernel syscount trace was not effective; run is not counted")
-                cleanup_processes()
-    
+
     except Exception as e:
         debug_print(f"Error in kernel syscount test: {e}")
         traceback.print_exc()

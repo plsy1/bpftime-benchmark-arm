@@ -145,8 +145,10 @@ async def run_userspace_uprobe_test(num_runs=10):
     result = None
     for i in range(num_runs):
         log_message(f"Starting userspace run {i+1}/{num_runs}")
-        victim = await asyncio.subprocess.create_subprocess_shell(
-            f'{BENCHMARK_DIR / "test"} 1 {TEST_ITER}',
+        victim = await asyncio.subprocess.create_subprocess_exec(
+            str(BENCHMARK_DIR / "test"),
+            "1",
+            str(TEST_ITER),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             cwd=PROJECT_ROOT,
@@ -220,8 +222,10 @@ async def run_kernel_uprobe_test(num_runs=10):
     result = None
     for i in range(num_runs):
         log_message(f"Starting kernel uprobe run {i+1}/{num_runs}")
-        victim = await asyncio.subprocess.create_subprocess_shell(
-            f'{BENCHMARK_DIR / "test"} 1 {TEST_ITER}',
+        victim = await asyncio.subprocess.create_subprocess_exec(
+            str(BENCHMARK_DIR / "test"),
+            "1",
+            str(TEST_ITER),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             cwd=PROJECT_ROOT,
@@ -267,19 +271,15 @@ async def run_embed_vm_test(num_runs=10):
     
     for i in range(num_runs):
         log_message(f"Starting embed VM run {i+1}/{num_runs}")
-        cmd = " ".join(
-            [
-                str(
-                    PROJECT_ROOT / "build/benchmark/simple-benchmark-with-embed-ebpf-calling"
-                ),
-                bpf_path,
-                bpf_path,
-            ]
-        )
-        log_message(f"Running command: {cmd}")
+        cmd = [
+            str(PROJECT_ROOT / "build/benchmark/simple-benchmark-with-embed-ebpf-calling"),
+            bpf_path,
+            bpf_path,
+        ]
+        log_message(f"Running command: {' '.join(cmd)}")
         
-        victim = await asyncio.subprocess.create_subprocess_shell(
-            cmd,
+        victim = await asyncio.subprocess.create_subprocess_exec(
+            *cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
             cwd=PROJECT_ROOT,

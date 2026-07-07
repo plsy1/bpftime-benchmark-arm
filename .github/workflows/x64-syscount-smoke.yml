@@ -44,7 +44,7 @@ jobs:
         run: |
           ./run_bpftime_arm64_benchmarks.sh \
             --install-deps \
-            --build \
+            --build-only \
             --mode smoke \
             --only syscount-nginx \
             --output-dir "$PWD/benchmark-results-x64-syscount-build-check"
@@ -65,5 +65,4 @@ jobs:
             benchmark/syscount-nginx/benchmark_results_*.json
             benchmark/syscount-nginx/reports.md
             benchmark/syscount-nginx/benchmark_chart.png
-            benchmark/syscount-nginx/trace_logs/**
           if-no-files-found: warn

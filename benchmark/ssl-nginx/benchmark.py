@@ -8,6 +8,7 @@ import shlex
 import statistics
 import signal
 import sys
+import threading
 import traceback
 from datetime import datetime
 from pathlib import Path
@@ -20,6 +21,8 @@ WRK_TIMEOUT = int(os.environ.get("SSL_NGINX_WRK_TIMEOUT", "15"))
 BPFTIME_RETRIES = int(os.environ.get("SSL_NGINX_BPFTIME_RETRIES", "0"))
 READY_TIMEOUT = int(os.environ.get("SSL_NGINX_READY_TIMEOUT", "10"))
 STRICT_TRACE_ERRORS = os.environ.get("SSL_NGINX_STRICT_TRACE_ERRORS", "").lower() in ("1", "true", "yes", "on")
+KEEP_TRACE_LOGS = os.environ.get("SSL_NGINX_KEEP_TRACE_LOGS", "").lower() in ("1", "true", "yes", "on")
+TRACE_LOG_MAX_BYTES = int(os.environ.get("SSL_NGINX_TRACE_LOG_MAX_BYTES", str(256 * 1024)))
 WRK_CMD = ["wrk", "https://127.0.0.1:4043/index.html", "-c", WRK_CONNECTIONS, "-d", WRK_DURATION]
 NGINX_CMD = ["nginx", "-c", "nginx.conf", "-p", "benchmark/ssl-nginx"]
 TEST_URL = "https://127.0.0.1:4043/index.html"
@@ -105,70 +108,166 @@ def mark_trace_warnings(test_name, summary):
     if summary["warning_markers"] and "trace_warnings" in run_stats[test_name]:
         run_stats[test_name]["trace_warnings"] += 1
 
-def open_trace_logs(test_name, run_index, attempt=None):
-    TRACE_LOG_ROOT.mkdir(parents=True, exist_ok=True)
-    suffix = f"run{run_index + 1:02d}"
-    if attempt is not None:
-        suffix += f"_attempt{attempt + 1:02d}"
-    stdout_path = TRACE_LOG_ROOT / f"{test_name}_{suffix}.stdout.log"
-    stderr_path = TRACE_LOG_ROOT / f"{test_name}_{suffix}.stderr.log"
-    stdout_file = stdout_path.open("w")
-    stderr_file = stderr_path.open("w")
-    return stdout_path, stderr_path, stdout_file, stderr_file
+class TraceCapture:
+    def __init__(self, test_name, run_index, attempt=None):
+        suffix = f"run{run_index + 1:02d}"
+        if attempt is not None:
+            suffix += f"_attempt{attempt + 1:02d}"
 
-def summarize_trace_log(test_name, run_index, stdout_path, stderr_path, returncode):
-    stdout_text = stdout_path.read_text(errors="replace") if stdout_path.exists() else ""
-    stderr_text = stderr_path.read_text(errors="replace") if stderr_path.exists() else ""
-    event_lines = [
-        line for line in stdout_text.splitlines()
-        if line.startswith(("READ/RECV", "WRITE/SEND", "HANDSHAKE"))
-    ]
-    attach_markers = [
-        marker for marker in ("OpenSSL path:", "GnuTLS path:", "NSS path:")
-        if marker in stdout_text
-    ]
-    hard_error_markers = [
-        marker for marker in (
-            "no program attached",
-            "failed to open perf buffer",
-            "ERROR:",
-            "Error:",
-        )
-        if marker in stdout_text or marker in stderr_text
-    ]
-    warning_markers = [
-        marker for marker in (
-            "error polling perf buffer",
-        )
-        if marker in stdout_text or marker in stderr_text
-    ]
-    attach_success = bool(attach_markers) and not hard_error_markers
-    if STRICT_TRACE_ERRORS and warning_markers:
-        attach_success = False
-    summary = {
-        "run": run_index + 1,
-        "stdout_path": str(stdout_path),
-        "stderr_path": str(stderr_path),
-        "returncode": returncode,
-        "event_count": len(event_lines),
-        "attach_markers": attach_markers,
-        "attach_started": bool(attach_markers),
-        "attach_success": attach_success,
-        "error_markers": hard_error_markers + warning_markers,
-        "hard_error_markers": hard_error_markers,
-        "warning_markers": warning_markers,
-        "stdout_bytes": stdout_path.stat().st_size if stdout_path.exists() else 0,
-        "stderr_bytes": stderr_path.stat().st_size if stderr_path.exists() else 0,
-    }
+        self.test_name = test_name
+        self.run_index = run_index
+        self.stdout_path = None
+        self.stderr_path = None
+        self.stdout_file = None
+        self.stderr_file = None
+        if KEEP_TRACE_LOGS:
+            TRACE_LOG_ROOT.mkdir(parents=True, exist_ok=True)
+            self.stdout_path = TRACE_LOG_ROOT / f"{test_name}_{suffix}.stdout.log"
+            self.stderr_path = TRACE_LOG_ROOT / f"{test_name}_{suffix}.stderr.log"
+            self.stdout_file = self.stdout_path.open("w")
+            self.stderr_file = self.stderr_path.open("w")
+        self.stdout_pipe_r, self.stdout_pipe_w = os.pipe()
+        self.stderr_pipe_r, self.stderr_pipe_w = os.pipe()
+        self.stdout_target = os.fdopen(self.stdout_pipe_w, "wb", buffering=0)
+        self.stderr_target = os.fdopen(self.stderr_pipe_w, "wb", buffering=0)
+        self._parent_targets_closed = False
+        self._lock = threading.Lock()
+        self._stored_bytes = {"stdout": 0, "stderr": 0}
+        self._captured_bytes = {"stdout": 0, "stderr": 0}
+        self._truncated = {"stdout": False, "stderr": False}
+        self._event_count = 0
+        self._attach_markers = []
+        self._hard_error_markers = []
+        self._warning_markers = []
+        self._threads = [
+            threading.Thread(target=self._read_pipe, args=(self.stdout_pipe_r, "stdout"), daemon=True),
+            threading.Thread(target=self._read_pipe, args=(self.stderr_pipe_r, "stderr"), daemon=True),
+        ]
+        for thread in self._threads:
+            thread.start()
+
+    def popen_kwargs(self):
+        return {"stdout": self.stdout_target, "stderr": self.stderr_target}
+
+    def close_parent_targets(self):
+        if self._parent_targets_closed:
+            return
+        self._parent_targets_closed = True
+        for target in (self.stdout_target, self.stderr_target):
+            try:
+                target.close()
+            except Exception:
+                pass
+
+    def _remember_marker(self, bucket, marker):
+        if marker not in bucket:
+            bucket.append(marker)
+
+    def _process_line(self, line):
+        with self._lock:
+            if line.startswith(("READ/RECV", "WRITE/SEND", "HANDSHAKE")):
+                self._event_count += 1
+            for marker in ("OpenSSL path:", "GnuTLS path:", "NSS path:"):
+                if marker in line:
+                    self._remember_marker(self._attach_markers, marker)
+            for marker in ("no program attached", "failed to open perf buffer", "ERROR:", "Error:"):
+                if marker in line:
+                    self._remember_marker(self._hard_error_markers, marker)
+            for marker in ("error polling perf buffer",):
+                if marker in line:
+                    self._remember_marker(self._warning_markers, marker)
+
+    def _write_bounded(self, stream_name, text):
+        target = self.stdout_file if stream_name == "stdout" else self.stderr_file
+        encoded_len = len(text.encode(errors="replace"))
+        with self._lock:
+            self._captured_bytes[stream_name] += encoded_len
+            if target is None or TRACE_LOG_MAX_BYTES <= 0:
+                return
+            remaining = TRACE_LOG_MAX_BYTES - self._stored_bytes[stream_name]
+            if remaining <= 0:
+                if not self._truncated[stream_name]:
+                    target.write(f"\n... truncated after {TRACE_LOG_MAX_BYTES} bytes; stream is still counted ...\n")
+                    target.flush()
+                    self._truncated[stream_name] = True
+                return
+            if encoded_len > remaining:
+                target.write(text.encode(errors="replace")[:remaining].decode(errors="replace"))
+                target.write(f"\n... truncated after {TRACE_LOG_MAX_BYTES} bytes; stream is still counted ...\n")
+                self._stored_bytes[stream_name] = TRACE_LOG_MAX_BYTES
+                self._truncated[stream_name] = True
+            else:
+                target.write(text)
+                self._stored_bytes[stream_name] += encoded_len
+            target.flush()
+
+    def _read_pipe(self, fd, stream_name):
+        with os.fdopen(fd, "rb", buffering=0) as pipe:
+            while True:
+                chunk = pipe.readline()
+                if not chunk:
+                    break
+                text = chunk.decode(errors="replace")
+                self._process_line(text)
+                self._write_bounded(stream_name, text)
+
+    def finish(self):
+        self.close_parent_targets()
+        for thread in self._threads:
+            thread.join(timeout=5)
+        if self.stdout_file is not None:
+            self.stdout_file.close()
+        if self.stderr_file is not None:
+            self.stderr_file.close()
+
+    def summarize(self, returncode):
+        with self._lock:
+            attach_markers = list(self._attach_markers)
+            hard_error_markers = list(self._hard_error_markers)
+            warning_markers = list(self._warning_markers)
+            event_count = self._event_count
+            captured_bytes = dict(self._captured_bytes)
+            truncated = dict(self._truncated)
+
+        attach_success = bool(attach_markers) and not hard_error_markers
+        if STRICT_TRACE_ERRORS and warning_markers:
+            attach_success = False
+        summary = {
+            "run": self.run_index + 1,
+            "stdout_path": str(self.stdout_path) if self.stdout_path else "",
+            "stderr_path": str(self.stderr_path) if self.stderr_path else "",
+            "returncode": returncode,
+            "event_count": event_count,
+            "attach_markers": attach_markers,
+            "attach_started": bool(attach_markers),
+            "attach_success": attach_success,
+            "error_markers": hard_error_markers + warning_markers,
+            "hard_error_markers": hard_error_markers,
+            "warning_markers": warning_markers,
+            "stdout_bytes": self.stdout_path.stat().st_size if self.stdout_path and self.stdout_path.exists() else 0,
+            "stderr_bytes": self.stderr_path.stat().st_size if self.stderr_path and self.stderr_path.exists() else 0,
+            "stdout_captured_bytes": captured_bytes["stdout"],
+            "stderr_captured_bytes": captured_bytes["stderr"],
+            "stdout_truncated": truncated["stdout"],
+            "stderr_truncated": truncated["stderr"],
+            "trace_logs_kept": KEEP_TRACE_LOGS,
+            "trace_log_max_bytes": TRACE_LOG_MAX_BYTES,
+        }
+        return summary
+
+def open_trace_logs(test_name, run_index, attempt=None):
+    return TraceCapture(test_name, run_index, attempt)
+
+def record_trace_summary(test_name, summary):
     trace_observability[test_name].append(summary)
     debug_print(
-        f"{test_name} run {run_index + 1}: attach_success={summary['attach_success']} "
-        f"events={summary['event_count']} returncode={returncode} "
-        f"stdout={stdout_path} stderr={stderr_path}"
+        f"{test_name} run {summary['run']}: attach_success={summary['attach_success']} "
+        f"events={summary['event_count']} returncode={summary['returncode']} "
+        f"trace_logs_kept={summary['trace_logs_kept']}"
     )
     return summary
 
-def terminate_and_summarize_trace(test_name, run_index, proc, stdout_path, stderr_path, stdout_file, stderr_file):
+def terminate_and_summarize_trace(test_name, proc, trace_capture):
     returncode = None
     if proc is not None:
         try:
@@ -181,9 +280,9 @@ def terminate_and_summarize_trace(test_name, run_index, proc, stdout_path, stder
             except Exception:
                 pass
         returncode = proc.poll()
-    stdout_file.close()
-    stderr_file.close()
-    return summarize_trace_log(test_name, run_index, stdout_path, stderr_path, returncode)
+    trace_capture.finish()
+    summary = trace_capture.summarize(returncode)
+    return record_trace_summary(test_name, summary)
 
 def trace_is_effective(summary):
     return summary["attach_success"] and summary["event_count"] > 0
@@ -486,14 +585,13 @@ def run_kernel_sslsniff():
             kernel_cmd = ["sudo", KERNEL_SSLSNIFF_PATH, *SSLSNIFF_ARGS]
             debug_print(f"Starting kernel sslsniff: {' '.join(kernel_cmd)}")
             sslsniff_proc = None
-            trace_files = None
+            trace_capture = None
             req_per_sec = None
             try:
-                trace_files = open_trace_logs("kernel_sslsniff", i)
-                stdout_path, stderr_path, stdout_file, stderr_file = trace_files
+                trace_capture = open_trace_logs("kernel_sslsniff", i)
                 sslsniff_proc = subprocess.Popen(kernel_cmd,
-                                                stdout=stdout_file,
-                                                stderr=stderr_file)
+                                                **trace_capture.popen_kwargs())
+                trace_capture.close_parent_targets()
                 time.sleep(2)  # Give sslsniff time to start
                 if sslsniff_proc.poll() is not None:
                     mark_failed("kernel_sslsniff", "attach_failures")
@@ -524,16 +622,11 @@ def run_kernel_sslsniff():
                 traceback.print_exc()
             finally:
                 debug_print("Killing sslsniff")
-                if trace_files is not None:
-                    stdout_path, stderr_path, stdout_file, stderr_file = trace_files
+                if trace_capture is not None:
                     summary = terminate_and_summarize_trace(
                         "kernel_sslsniff",
-                        i,
                         sslsniff_proc,
-                        stdout_path,
-                        stderr_path,
-                        stdout_file,
-                        stderr_file,
+                        trace_capture,
                     )
                     if req_per_sec:
                         if trace_is_effective(summary):
@@ -606,7 +699,7 @@ def run_bpftime_sslsniff():
 
             nginx_proc = None
             sslsniff_proc = None
-            trace_files = None
+            trace_capture = None
             req_per_sec = None
             try:
                 # Start sslsniff with bpftime
@@ -614,12 +707,11 @@ def run_bpftime_sslsniff():
                 debug_print(f"Starting sslsniff with bpftime: LD_PRELOAD={SYSCALL_SERVER_PATH} {' '.join(bpftime_cmd)}")
                 env = os.environ.copy()
                 env["LD_PRELOAD"] = SYSCALL_SERVER_PATH
-                trace_files = open_trace_logs("bpftime_sslsniff", i, attempt)
-                stdout_path, stderr_path, stdout_file, stderr_file = trace_files
+                trace_capture = open_trace_logs("bpftime_sslsniff", i, attempt)
                 sslsniff_proc = subprocess.Popen(bpftime_cmd,
                                                 env=env,
-                                                stdout=stdout_file,
-                                                stderr=stderr_file)
+                                                **trace_capture.popen_kwargs())
+                trace_capture.close_parent_targets()
                 time.sleep(2)  # Give sslsniff time to start
                 if sslsniff_proc.poll() is not None:
                     mark_failed("bpftime_sslsniff", "attach_failures")
@@ -668,16 +760,11 @@ def run_bpftime_sslsniff():
                         nginx_proc.wait(timeout=5)
                 except Exception as e:
                     debug_print(f"Error terminating processes: {e}")
-                if trace_files is not None:
-                    stdout_path, stderr_path, stdout_file, stderr_file = trace_files
+                if trace_capture is not None:
                     summary = terminate_and_summarize_trace(
                         "bpftime_sslsniff",
-                        i,
                         sslsniff_proc,
-                        stdout_path,
-                        stderr_path,
-                        stdout_file,
-                        stderr_file,
+                        trace_capture,
                     )
                     if req_per_sec:
                         if trace_is_effective(summary):
@@ -802,6 +889,8 @@ def save_results():
                 "bpftime_retries": BPFTIME_RETRIES,
                 "strict_trace_errors": STRICT_TRACE_ERRORS,
                 "sslsniff_args": SSLSNIFF_ARGS,
+                "keep_trace_logs": KEEP_TRACE_LOGS,
+                "trace_log_max_bytes": TRACE_LOG_MAX_BYTES,
                 "trace_log_root": str(TRACE_LOG_ROOT),
             },
             "stats": run_stats,

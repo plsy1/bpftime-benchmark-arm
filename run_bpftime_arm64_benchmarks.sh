@@ -31,6 +31,7 @@ Arguments:
 
 Options:
   --build                   Build bpftime and benchmark targets before running.
+  --build-only              Build bpftime and benchmark targets, then skip benchmark execution.
   --no-build                Do not build; only run benchmarks. This is the default.
   --clone                   Clone/pull the benchmark repository before running.
                             With --clone, build is enabled by default unless --no-build is set.
@@ -98,6 +99,7 @@ else
   RUN_BUILD_EXPLICIT=0
 fi
 RUN_BUILD="${RUN_BUILD:-0}"       # 1: build before running, 0: skip build
+BUILD_ONLY="${BUILD_ONLY:-0}"     # 1: build selected targets and skip benchmark execution
 RUN_UPROBE="${RUN_UPROBE:-1}"
 RUN_SYSCALL="${RUN_SYSCALL:-1}"
 RUN_SYSCOUNT="${RUN_SYSCOUNT:-1}"
@@ -124,6 +126,12 @@ while [[ $# -gt 0 ]]; do
     --build)
       RUN_BUILD=1
       RUN_BUILD_EXPLICIT=1
+      shift
+      ;;
+    --build-only)
+      RUN_BUILD=1
+      RUN_BUILD_EXPLICIT=1
+      BUILD_ONLY=1
       shift
       ;;
     --no-build)
@@ -428,6 +436,7 @@ collect_outputs() {
         \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
         -newer "$RUN_MARKER" \
         ! -name "access.log" \
+        ! -path "*/trace_logs/*" \
         -print
     fi
     if [[ "$RUN_SSL_NGINX" == "1" && -d benchmark/ssl-nginx ]]; then
@@ -635,6 +644,7 @@ log "Repository: $REPO"
 log "Output: $OUT"
 log "Mode: $MODE"
 log "Run build: $RUN_BUILD"
+log "Build only: $BUILD_ONLY"
 if [[ "$AUTO_SKIPPED_ARM64_SYSCALL" == "1" ]]; then
   log "Skipping syscall benchmark on AArch64 because the userspace syscall trampoline is not implemented"
 fi
@@ -762,6 +772,15 @@ fi
 
 prepare_compat_paths
 cleanup_bpftime
+
+if [[ "$BUILD_ONLY" == "1" ]]; then
+  log "Build-only mode; skipping benchmark execution"
+  RUN_UPROBE=0
+  RUN_SYSCALL=0
+  RUN_SYSCOUNT=0
+  RUN_SSL_NGINX=0
+  RUN_MPK=0
+fi
 
 if [[ "$RUN_UPROBE" == "1" ]]; then
   if [[ ! -e /sys/kernel/btf/vmlinux ]]; then

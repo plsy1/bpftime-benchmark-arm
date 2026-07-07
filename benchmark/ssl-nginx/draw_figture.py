@@ -33,12 +33,18 @@ if size_filter:
 BENCHMARK_CMD = ["python3", "benchmark/ssl-nginx/benchmark.py"]
 OUTPUT_DIR = "benchmark/ssl-nginx"
 INDEX_HTML_PATH = "benchmark/ssl-nginx/index.html"
+RAW_OUTPUT_MAX_CHARS = int(os.environ.get("SSL_NGINX_RAW_OUTPUT_MAX_CHARS", str(256 * 1024)))
 
 def create_dir_if_not_exists(dir_path):
     """Create directory if it doesn't exist"""
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
         print(f"Created directory: {dir_path}", flush=True)
+
+def truncate_text(text, limit=RAW_OUTPUT_MAX_CHARS):
+    if limit <= 0 or len(text) <= limit:
+        return text
+    return text[:limit] + f"\n... truncated after {limit} characters ...\n"
 
 def generate_test_file(size_name, size_bytes):
     """Generate a single HTML test file with the specified size"""
@@ -75,9 +81,9 @@ def run_benchmark(size_name, size_bytes):
     
     # Extract results
     output = result.stdout
-    print(output, flush=True)
+    print(truncate_text(output), flush=True)
     if result.stderr:
-        print(result.stderr, flush=True)
+        print(truncate_text(result.stderr), flush=True)
     
     inner_result_path = None
     inner_stats = {}
@@ -122,8 +128,8 @@ def run_benchmark(size_name, size_bytes):
         "config": inner_config,
         "inner_result_path": inner_result_path,
         "returncode": result.returncode,
-        "stderr": result.stderr,
-        "raw_output": output
+        "stderr": truncate_text(result.stderr),
+        "raw_output": truncate_text(output)
     }
 
 def save_results(all_results):

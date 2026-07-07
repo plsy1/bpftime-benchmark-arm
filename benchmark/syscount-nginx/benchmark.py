@@ -97,6 +97,14 @@ def bpftime_syscall_supported():
         return True
     return platform.machine().lower() not in ("aarch64", "arm64")
 
+def bpftime_target_needs_sudo():
+    value = os.environ.get("SYSCOUNT_NGINX_BPFTIME_TARGET_SUDO", "auto").lower()
+    if value in ("1", "true", "yes", "on"):
+        return True
+    if value in ("0", "false", "no", "off"):
+        return False
+    return bpftime_syscall_supported()
+
 def open_trace_logs(test_name, run_index):
     TRACE_LOG_ROOT.mkdir(parents=True, exist_ok=True)
     suffix = f"run{run_index + 1:02d}"
@@ -567,8 +575,8 @@ def run_userbpf_syscount(target_pid=None):
             debug_print("Starting nginx with bpftime")
             env = os.environ.copy()
             if use_syscall_transformer:
-                env["AGENT_SO"] = AGENT_PATH
-                env["LD_PRELOAD"] = AGENT_TRANSFORMER_PATH
+                env["AGENT_SO"] = os.path.abspath(AGENT_PATH)
+                env["LD_PRELOAD"] = os.path.abspath(AGENT_TRANSFORMER_PATH)
             else:
                 env["LD_PRELOAD"] = AGENT_PATH
             
@@ -584,7 +592,15 @@ def run_userbpf_syscount(target_pid=None):
             modified_nginx_cmd = ["nginx", "-c", abs_nginx_conf, "-p", abs_nginx_dir]
             
             debug_print(f"Starting nginx with bpftime: {' '.join(modified_nginx_cmd)}")
-            nginx_proc = subprocess.Popen(modified_nginx_cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if use_syscall_transformer and bpftime_target_needs_sudo():
+                sudo_env = ["sudo", "env", f"AGENT_SO={env['AGENT_SO']}", f"LD_PRELOAD={env['LD_PRELOAD']}"]
+                nginx_proc = subprocess.Popen(
+                    [*sudo_env, *modified_nginx_cmd],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+            else:
+                nginx_proc = subprocess.Popen(modified_nginx_cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             time.sleep(2)  # Give nginx time to start
             
             # Check if nginx started successfully
@@ -593,6 +609,7 @@ def run_userbpf_syscount(target_pid=None):
                 debug_print(f"nginx with bpftime failed to start. Exit code: {nginx_proc.returncode}")
                 debug_print(f"stdout: {stdout.decode() if stdout else 'None'}")
                 debug_print(f"stderr: {stderr.decode() if stderr else 'None'}")
+                mark_failed(test_name, "exceptions")
                 continue
             
             # Get nginx PID

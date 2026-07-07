@@ -41,7 +41,7 @@ Options:
   --workdir DIR             Parent directory for cloned repo. Default: ./bpftime-arm64-run.
   --mode MODE               full or smoke. Default: full.
                             smoke uses uprobe --iter 1, uprobe --test-iter 10000,
-                            and ssl-nginx 1kb only.
+                            ssl-nginx 1kb only, and short syscount-nginx runs.
   --uprobe-iter N           Number of uprobe outer iterations. Default: 10 in full, 1 in smoke.
   --uprobe-test-iter N      Inner iterations passed to benchmark/uprobe/benchmark.py.
                             Default: 100000 in full, 10000 in smoke.
@@ -367,6 +367,11 @@ if [[ "$MODE" == "smoke" ]]; then
   UPROBE_ITER="${USER_UPROBE_ITER:-1}"
   UPROBE_TEST_ITER="${USER_UPROBE_TEST_ITER:-10000}"
   SSL_NGINX_SIZES="${USER_SSL_NGINX_SIZES:-1kb}"
+  export SYSCOUNT_NGINX_NUM_RUNS="${SYSCOUNT_NGINX_NUM_RUNS:-1}"
+  export SYSCOUNT_NGINX_WRK_DURATION="${SYSCOUNT_NGINX_WRK_DURATION:-1}"
+  export SYSCOUNT_NGINX_DURATION="${SYSCOUNT_NGINX_DURATION:-2}"
+  export SYSCOUNT_NGINX_WRK_TIMEOUT="${SYSCOUNT_NGINX_WRK_TIMEOUT:-5}"
+  export SYSCOUNT_NGINX_TIMEOUT="${SYSCOUNT_NGINX_TIMEOUT:-8}"
 else
   UPROBE_ITER="${USER_UPROBE_ITER:-10}"
   UPROBE_TEST_ITER="${USER_UPROBE_TEST_ITER:-100000}"

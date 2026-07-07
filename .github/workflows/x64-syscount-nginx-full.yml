@@ -22,8 +22,6 @@ jobs:
           clang --version || true
 
       - name: Run syscount-nginx full benchmark
-        env:
-          SYSCOUNT_NGINX_ALLOW_MISSING_USERBPF: "1"
         run: |
           ./run_bpftime_arm64_benchmarks.sh \
             --install-deps \

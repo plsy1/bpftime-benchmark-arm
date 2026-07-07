@@ -90,10 +90,6 @@ jobs:
           elif [[ "$BENCHMARK" == "ssl-nginx" ]]; then
             extra_args+=(--ssl-sizes "$SSL_SIZES")
           fi
-          if [[ "$OUTPUT_DIR" == "benchmark-results-x64-syscount-nginx-full" ]]; then
-            export SYSCOUNT_NGINX_ALLOW_MISSING_USERBPF=1
-          fi
-
           ./run_bpftime_arm64_benchmarks.sh \
             --install-deps \
             --build \

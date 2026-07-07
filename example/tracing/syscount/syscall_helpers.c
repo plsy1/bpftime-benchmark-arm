@@ -47,7 +47,7 @@ void init_syscall_names(void)
 	int err;
 	FILE *f;
 
-	f = popen("ausyscall --dump 2>/dev/null", "r");
+	f = popen("env -u LD_PRELOAD ausyscall --dump 2>/dev/null", "r");
 	if (!f) {
 		warn("popen: ausyscall --dump: %s\n", strerror(errno));
 		return;

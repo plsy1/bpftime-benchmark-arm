@@ -20,7 +20,7 @@ on:
 
 jobs:
   smoke:
-    name: uprobe + syscall + ssl-nginx smoke
+    name: uprobe + syscall + syscount-nginx + ssl-nginx smoke
     runs-on: ubuntu-24.04
     timeout-minutes: 360
 
@@ -43,7 +43,6 @@ jobs:
             --install-deps \
             --build \
             --mode smoke \
-            --skip-syscount \
             --uprobe-test-iter "$UPROBE_TEST_ITER" \
             --ssl-sizes "$SSL_SIZES" \
             --output-dir "$PWD/benchmark-results-x64-smoke"

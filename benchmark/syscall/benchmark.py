@@ -8,6 +8,7 @@ import statistics
 import signal
 import sys
 import traceback
+import platform
 from datetime import datetime
 
 # Configuration
@@ -628,8 +629,8 @@ def main():
     
     # Check for sudo
     if os.geteuid() != 0:
-        print("This benchmark requires sudo privileges. Please run with sudo.")
-        return
+        print("This benchmark requires sudo privileges. Re-launching with sudo...")
+        os.execvp("sudo", ["sudo", sys.executable] + sys.argv)
     
     # Initial cleanup to ensure no leftover processes
     cleanup_processes()
@@ -642,7 +643,10 @@ def main():
         run_kernel_tracepoint()
         cleanup_processes()
         
-        debug_print("Skipping userspace syscall on ARM64: text_segment_transformer is x86_64-only upstream")
+        if platform.machine().lower() in ("aarch64", "arm64"):
+            debug_print("Skipping userspace syscall on ARM64: text_segment_transformer is x86_64-only upstream")
+        else:
+            run_userspace_syscall()
         cleanup_processes()
         
         # Print and save results

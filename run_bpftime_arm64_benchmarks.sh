@@ -66,6 +66,9 @@ Options:
   --install-deps            Install native ARM64 Ubuntu dependencies with apt-get before running.
                             Default: only check dependencies and print warnings.
   --no-check-deps           Skip dependency checks.
+  --keep-previous-results   Keep previous unpacked benchmark result directories and generated
+                            benchmark artifacts. Default: clean them before each run while
+                            preserving existing .tar.gz archives.
   -h, --help                Show this help message.
 
 Examples:
@@ -121,6 +124,7 @@ CHECK_DEPS="${CHECK_DEPS:-1}"
 FAILURES=0
 ONLY_BENCH=""
 AUTO_SKIPPED_ARM64_SYSCALL=0
+KEEP_PREVIOUS_RESULTS="${KEEP_PREVIOUS_RESULTS:-0}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -295,6 +299,10 @@ while [[ $# -gt 0 ]]; do
       CHECK_DEPS=0
       shift
       ;;
+    --keep-previous-results)
+      KEEP_PREVIOUS_RESULTS=1
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -392,12 +400,53 @@ if [[ "$(uname -m)" == "aarch64" && "$RUN_SYSCALL" == "1" && "$ONLY_BENCH" != "s
   AUTO_SKIPPED_ARM64_SYSCALL=1
 fi
 
-mkdir -p "$OUT"
-touch "$RUN_MARKER"
-
 log() {
   echo "[$(date '+%F %T')] $*" | tee -a "$OUT/run.log"
 }
+
+clean_previous_results() {
+  if [[ "$KEEP_PREVIOUS_RESULTS" == "1" ]]; then
+    return 0
+  fi
+
+  local current_out
+  current_out="$(realpath -m "$OUT")"
+
+  find "$REPO" -maxdepth 1 -type d -name 'benchmark-results-*' -print0 2>/dev/null |
+    while IFS= read -r -d '' dir; do
+      if [[ "$(realpath -m "$dir")" != "$current_out" ]]; then
+        rm -rf "$dir"
+      fi
+    done
+
+  rm -rf \
+    "$REPO/benchmark/ssl-nginx/trace_logs" \
+    "$REPO/benchmark/syscount-nginx/trace_logs" \
+    "$REPO/benchmark/uprobe/trace_logs" \
+    "$REPO/benchmark/syscall/trace_logs" \
+    "$REPO/benchmark/mpk/trace_logs"
+
+  find "$REPO/benchmark" -maxdepth 3 -type f \
+    \( -name 'benchmark-output*.json' \
+       -o -name 'benchmark_results*.json' \
+       -o -name 'results*.md' \
+       -o -name 'benchmark-logs*.txt' \
+       -o -name 'benchmark_chart*.png' \
+       -o -name 'absolute_performance*.png' \
+       -o -name 'relative_performance*.png' \
+       -o -name 'throughput_comparison*.png' \
+       -o -name 'access.log' \) \
+    -delete 2>/dev/null || true
+}
+
+clean_previous_results
+mkdir -p "$OUT"
+touch "$RUN_MARKER"
+if [[ "$KEEP_PREVIOUS_RESULTS" == "1" ]]; then
+  log "Previous benchmark result cleanup: disabled"
+else
+  log "Previous benchmark result cleanup: enabled; existing .tar.gz archives are preserved"
+fi
 
 run_step() {
   local name="$1"

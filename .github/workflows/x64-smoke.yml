@@ -1,0 +1,58 @@
+name: X64 Smoke
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/x64-smoke.yml"
+      - "run_bpftime_arm64_benchmarks.sh"
+  workflow_dispatch:
+    inputs:
+      uprobe_test_iter:
+        description: "Inner iterations for uprobe smoke test"
+        required: false
+        default: "10000"
+      ssl_sizes:
+        description: "Comma-separated ssl-nginx payload sizes for smoke test"
+        required: false
+        default: "1kb"
+
+jobs:
+  smoke:
+    name: uprobe + syscall + ssl-nginx smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show runner information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+
+      - name: Run smoke benchmarks
+        env:
+          UPROBE_TEST_ITER: ${{ github.event.inputs.uprobe_test_iter || '10000' }}
+          SSL_SIZES: ${{ github.event.inputs.ssl_sizes || '1kb' }}
+        run: |
+          ./run_bpftime_arm64_benchmarks.sh \
+            --install-deps \
+            --build \
+            --mode smoke \
+            --skip-syscount \
+            --uprobe-test-iter "$UPROBE_TEST_ITER" \
+            --ssl-sizes "$SSL_SIZES" \
+            --output-dir "$PWD/benchmark-results-x64-smoke"
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: x64-smoke-benchmark-results
+          path: |
+            benchmark-results-x64-smoke.tar.gz
+          if-no-files-found: warn

@@ -581,16 +581,17 @@ def run_userbpf_syscount(target_pid=None):
             prepare_nginx_prefix(abs_nginx_dir)
             modified_nginx_cmd = [NGINX_BIN, "-c", abs_nginx_conf, "-p", abs_nginx_dir]
 
+            # Match the official syscount-nginx semantics: both userbpf
+            # targeted and untargeted runs start nginx inside the bpftime
+            # agent environment. The only difference is the syscount target PID.
             env = os.environ.copy()
-            nginx_label = "nginx"
-            if target_pid:
-                nginx_label = "nginx with bpftime"
-                env["LD_PRELOAD"] = os.path.abspath(AGENT_PATH)
+            env["LD_PRELOAD"] = os.path.abspath(AGENT_PATH)
+            nginx_label = "nginx with bpftime"
 
             debug_print(f"Starting {nginx_label}: {' '.join(modified_nginx_cmd)}")
             nginx_proc = subprocess.Popen(
                 modified_nginx_cmd,
-                env=env if target_pid else None,
+                env=env,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )

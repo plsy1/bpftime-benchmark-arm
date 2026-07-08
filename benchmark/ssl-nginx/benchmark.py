@@ -27,6 +27,23 @@ KERNEL_SSLSNIFF_PATH = "example/tracing/sslsniff/sslsniff"
 SSLSNIFF_ARGS = shlex.split(os.environ.get("SSL_NGINX_SSLSNIFF_ARGS", ""))
 AGENT_PATH = "build/runtime/agent/libbpftime-agent.so"
 SYSCALL_SERVER_PATH = "build/runtime/syscall-server/libbpftime-syscall-server.so"
+BENCH_ORDER = [
+    item.strip()
+    for item in os.environ.get("SSL_NGINX_BENCH_ORDER", "baseline,kernel,bpftime").split(",")
+    if item.strip()
+]
+BENCH_RESULT_KEYS = {
+    "baseline": "baseline",
+    "kernel": "kernel_sslsniff",
+    "kernel_sslsniff": "kernel_sslsniff",
+    "bpftime": "bpftime_sslsniff",
+    "bpftime_sslsniff": "bpftime_sslsniff",
+}
+ACTIVE_RESULT_KEYS = {
+    BENCH_RESULT_KEYS[item]
+    for item in BENCH_ORDER
+    if item in BENCH_RESULT_KEYS
+}
 
 # Result storage
 results = {
@@ -799,6 +816,7 @@ def save_results():
                 "bpftime_retries": BPFTIME_RETRIES,
                 "trace_check_timeout": TRACE_CHECK_TIMEOUT,
                 "sslsniff_args": SSLSNIFF_ARGS,
+                "bench_order": BENCH_ORDER,
             },
             "stats": run_stats,
             "trace_observability": trace_observability,
@@ -810,7 +828,8 @@ def save_results():
 def benchmark_failed():
     return any(
         stats["valid_runs"] < stats["target_runs"]
-        for stats in run_stats.values()
+        for test_name, stats in run_stats.items()
+        if test_name in ACTIVE_RESULT_KEYS
     )
 
 def main():
@@ -868,9 +887,19 @@ def main():
             return
         
         # Run benchmarks
-        run_baseline()
-        run_kernel_sslsniff()
-        run_bpftime_sslsniff()
+        bench_runners = {
+            "baseline": run_baseline,
+            "kernel": run_kernel_sslsniff,
+            "kernel_sslsniff": run_kernel_sslsniff,
+            "bpftime": run_bpftime_sslsniff,
+            "bpftime_sslsniff": run_bpftime_sslsniff,
+        }
+        for bench_name in BENCH_ORDER:
+            runner = bench_runners.get(bench_name)
+            if runner is None:
+                debug_print(f"Unknown benchmark phase in SSL_NGINX_BENCH_ORDER: {bench_name}")
+                sys.exit(1)
+            runner()
         
         # Print and save results
         print_statistics()

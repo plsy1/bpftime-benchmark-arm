@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     autoconf \
     automake \
     binutils-dev \
-    bpftool \
     build-essential \
     ca-certificates \
     clang \

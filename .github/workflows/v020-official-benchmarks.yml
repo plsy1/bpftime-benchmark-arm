@@ -67,7 +67,7 @@ jobs:
           python3 benchmark/uprobe/benchmark.py --iter 3
           # run remove to avoid conflict with the previous run
           sudo build/tools/bpftimetool/bpftimetool remove
-          python3 benchmark/syscall/benchmark.py
+          sudo -E python3 benchmark/syscall/benchmark.py
           sudo build/tools/bpftimetool/bpftimetool remove
           python3 benchmark/mpk/benchmark.py --iter 3
 

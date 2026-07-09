@@ -1,0 +1,128 @@
+name: ARM64 SSL-nginx Perf Stat
+
+on:
+  workflow_dispatch:
+    inputs:
+      ssl_sizes:
+        description: "Comma-separated ssl-nginx payload sizes"
+        required: false
+        default: "1kb,128kb,256kb"
+      perf_repeat:
+        description: "perf stat repeats per mode/size"
+        required: false
+        default: "3"
+      wrk_duration:
+        description: "wrk duration for each perf stat run"
+        required: false
+        default: "5"
+      wrk_connections:
+        description: "wrk connections"
+        required: false
+        default: "100"
+      wrk_timeout:
+        description: "wrk timeout in seconds; must be larger than wrk_duration"
+        required: false
+        default: "30"
+
+jobs:
+  ssl-nginx-perf-stat:
+    name: ssl-nginx perf stat
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            binutils-dev \
+            build-essential \
+            ca-certificates \
+            clang \
+            cmake \
+            curl \
+            git \
+            libboost-all-dev \
+            libelf-dev \
+            libncurses-dev \
+            libssl-dev \
+            libtool \
+            libyaml-cpp-dev \
+            llvm \
+            llvm-dev \
+            nginx \
+            pkg-config \
+            python3 \
+            python3-matplotlib \
+            python3-numpy \
+            systemtap-sdt-dev \
+            wrk \
+            zlib1g-dev
+          sudo apt-get install -y linux-tools-common linux-tools-generic || true
+
+      - name: Show runner and perf information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+          llvm-config --version || true
+          clang --version
+          which perf || true
+          perf --version || true
+          cat /proc/sys/kernel/perf_event_paranoid || true
+          sudo sysctl kernel.perf_event_paranoid=1 || true
+          cat /proc/sys/kernel/perf_event_paranoid || true
+
+      - name: Build ssl-nginx benchmark
+        run: |
+          ./run_bpftime_arm64_benchmarks.sh \
+            --build-only \
+            --mode full \
+            --only ssl-nginx \
+            --output-dir "$PWD/benchmark-results-arm64-ssl-nginx-perf-build"
+
+      - name: Run sslsniff reader perf stat
+        env:
+          SSL_NGINX_SIZES: ${{ github.event.inputs.ssl_sizes || '1kb,128kb,256kb' }}
+          SSL_NGINX_PERF_REPEAT: ${{ github.event.inputs.perf_repeat || '3' }}
+          SSL_NGINX_WRK_DURATION: ${{ github.event.inputs.wrk_duration || '5' }}
+          SSL_NGINX_WRK_CONNECTIONS: ${{ github.event.inputs.wrk_connections || '100' }}
+          SSL_NGINX_WRK_TIMEOUT: ${{ github.event.inputs.wrk_timeout || '30' }}
+          SSL_NGINX_BENCH_ORDER: "kernel,bpftime"
+          SSL_NGINX_SSLSNIFF_ARGS: "--no-gnutls --no-nss -c nginx"
+        run: |
+          mkdir -p benchmark-results-arm64-ssl-nginx-perf-stat
+          python3 benchmark/ssl-nginx/perf_stat_sslsniff.py \
+            2>&1 | tee benchmark-results-arm64-ssl-nginx-perf-stat/perf_stat_sslsniff.log
+
+      - name: Collect perf stat results
+        if: always()
+        run: |
+          mkdir -p benchmark-results-arm64-ssl-nginx-perf-stat/files
+          {
+            date -Iseconds
+            uname -a
+            uname -m
+            lscpu || true
+            which perf || true
+            perf --version || true
+            cat /proc/sys/kernel/perf_event_paranoid || true
+          } > benchmark-results-arm64-ssl-nginx-perf-stat/system-info.txt
+          git rev-parse HEAD > benchmark-results-arm64-ssl-nginx-perf-stat/git-info.txt 2>&1 || true
+          git status --short >> benchmark-results-arm64-ssl-nginx-perf-stat/git-info.txt 2>&1 || true
+          cp -a benchmark/ssl-nginx/perf_stat_sslsniff_*.json benchmark-results-arm64-ssl-nginx-perf-stat/files/ 2>/dev/null || true
+          cp -a benchmark/ssl-nginx/index.html benchmark-results-arm64-ssl-nginx-perf-stat/files/ 2>/dev/null || true
+          tar -czf benchmark-results-arm64-ssl-nginx-perf-stat.tar.gz benchmark-results-arm64-ssl-nginx-perf-stat
+
+      - name: Upload perf stat results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arm64-ssl-nginx-perf-stat-results
+          path: benchmark-results-arm64-ssl-nginx-perf-stat.tar.gz
+          if-no-files-found: warn

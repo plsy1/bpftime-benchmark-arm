@@ -15,6 +15,9 @@ jobs:
     name: official v0.2.0 microbenchmark logic
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    env:
+      CLANG: clang-15
+      LD_LIBRARY_PATH: /usr/lib/llvm-15/lib
     defaults:
       run:
         working-directory: bpftime
@@ -29,11 +32,10 @@ jobs:
       - name: install deps
         run: |
           sudo apt update
-          wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && sudo ./llvm.sh 17
-          sudo apt update
           sudo apt install -y --no-install-recommends \
             libelf1 libelf-dev zlib1g-dev make cmake git libboost-all-dev \
-            binutils-dev libyaml-cpp-dev ca-certificates clang llvm pkg-config llvm-dev
+            binutils-dev libyaml-cpp-dev ca-certificates pkg-config \
+            clang-15 llvm-15 llvm-15-dev
 
       - name: install additional dependencies for experiments
         run: |
@@ -44,8 +46,11 @@ jobs:
           sudo apt install -y python3-pip
           pip3 install -r benchmark/requirements.txt
 
-      - name: verify llvm-17 installation
-        run: llvm-config-17 --version
+      - name: verify llvm-15 installation
+        run: |
+          llvm-config-15 --version
+          clang-15 --version
+          test -d /usr/lib/llvm-15/cmake
 
       - name: clear cmake cache
         run: rm -rf build

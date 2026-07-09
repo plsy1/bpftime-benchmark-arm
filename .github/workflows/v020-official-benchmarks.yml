@@ -1,0 +1,93 @@
+name: v0.2.0 Official Benchmarks
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-run:
+    name: official v0.2.0 benchmark logic
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: codex/v0.2.0-official-action
+          submodules: "recursive"
+
+      - name: install deps
+        run: |
+          sudo apt update
+          wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && sudo ./llvm.sh 17
+          sudo apt update
+          sudo apt install -y --no-install-recommends \
+            libelf1 libelf-dev zlib1g-dev make cmake git libboost-all-dev \
+            binutils-dev libyaml-cpp-dev ca-certificates clang llvm pkg-config llvm-dev
+
+      - name: install additional dependencies for experiments
+        run: |
+          sudo apt-get install libfuse-dev fuse libfuse3-dev
+
+      - name: install python dependencies
+        run: |
+          sudo apt install -y python3-pip
+          pip3 install -r benchmark/requirements.txt
+
+      - name: verify llvm-17 installation
+        run: llvm-config-17 --version
+
+      - name: clear cmake cache
+        run: rm -rf build
+
+      - name: build benchmarks
+        run: make benchmark
+
+      - name: run micro-benchmarks
+        run: |
+          # run micro-benchmarks
+          python3 benchmark/uprobe/benchmark.py --iter 3
+          # run remove to avoid conflict with the previous run
+          sudo build/tools/bpftimetool/bpftimetool remove
+          python3 benchmark/syscall/benchmark.py
+          sudo build/tools/bpftimetool/bpftimetool remove
+          python3 benchmark/mpk/benchmark.py --iter 3
+
+      - name: collect benchmark outputs
+        if: always()
+        run: |
+          set +e
+          mkdir -p benchmark-results-v020-official/files
+          {
+            echo "date: $(date -Is)"
+            echo "uname: $(uname -a)"
+            echo "arch: $(uname -m)"
+            echo "nproc: $(nproc)"
+            echo
+            cat /etc/os-release 2>/dev/null || true
+          } > benchmark-results-v020-official/system-info.txt
+          git rev-parse HEAD > benchmark-results-v020-official/git-info.txt 2>&1 || true
+          git status --short >> benchmark-results-v020-official/git-info.txt 2>&1 || true
+          find benchmark -maxdepth 4 -type f \
+            \( -name "*.json" -o -name "*.md" -o -name "*.txt" -o -name "*.png" -o -name "*.log" \) \
+            -print > benchmark-results-v020-official/benchmark-files.txt 2>/dev/null || true
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            mkdir -p "benchmark-results-v020-official/files/$(dirname "$f")"
+            cp -a "$f" "benchmark-results-v020-official/files/$f" 2>/dev/null || true
+          done < benchmark-results-v020-official/benchmark-files.txt
+          tar -czf benchmark-results-v020-official.tar.gz benchmark-results-v020-official
+
+      - name: upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v020-official-benchmark-results
+          path: benchmark-results-v020-official.tar.gz
+          if-no-files-found: warn

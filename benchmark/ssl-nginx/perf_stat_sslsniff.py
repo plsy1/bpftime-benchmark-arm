@@ -184,6 +184,56 @@ def start_sslsniff(mode):
     return proc
 
 
+def process_table():
+    result = subprocess.run(
+        ["ps", "-eo", "pid=,ppid=,comm=,args="],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    processes = []
+    for line in result.stdout.splitlines():
+        parts = line.strip().split(None, 3)
+        if len(parts) < 4:
+            continue
+        pid, ppid, comm, args = parts
+        processes.append({
+            "pid": int(pid),
+            "ppid": int(ppid),
+            "comm": comm,
+            "args": args,
+        })
+    return processes
+
+
+def find_descendant_sslsniff_pid(root_pid):
+    processes = process_table()
+    children_by_parent = {}
+    for proc in processes:
+        children_by_parent.setdefault(proc["ppid"], []).append(proc)
+
+    stack = list(children_by_parent.get(root_pid, []))
+    while stack:
+        proc = stack.pop(0)
+        if proc["comm"] == "sslsniff" or SSLSNIFF_PATH in proc["args"]:
+            return proc["pid"]
+        stack.extend(children_by_parent.get(proc["pid"], []))
+    return None
+
+
+def wait_for_perf_target_pid(mode, sslsniff_proc):
+    if mode == "bpftime":
+        return sslsniff_proc.pid
+
+    deadline = time.time() + READY_TIMEOUT
+    while time.time() < deadline:
+        target_pid = find_descendant_sslsniff_pid(sslsniff_proc.pid)
+        if target_pid is not None:
+            return target_pid
+        time.sleep(0.2)
+    raise RuntimeError(f"could not find kernel sslsniff child process for sudo pid={sslsniff_proc.pid}")
+
+
 def run_perf_wrk(sslsniff_pid):
     wrk_cmd = ["wrk", TEST_URL, "-c", WRK_CONNECTIONS, "-d", WRK_DURATION]
     perf_cmd = [
@@ -224,7 +274,9 @@ def run_one(mode):
         else:
             nginx_proc = start_nginx(mode)
             sslsniff_proc = start_sslsniff(mode)
-        return run_perf_wrk(sslsniff_proc.pid)
+        perf_target_pid = wait_for_perf_target_pid(mode, sslsniff_proc)
+        log(f"Using {mode} sslsniff perf target pid={perf_target_pid}")
+        return run_perf_wrk(perf_target_pid)
     finally:
         terminate_process(sslsniff_proc)
         terminate_process(nginx_proc)

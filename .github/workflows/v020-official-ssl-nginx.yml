@@ -15,12 +15,16 @@ jobs:
     name: official v0.2.0 ssl-nginx
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 360
+    defaults:
+      run:
+        working-directory: bpftime
 
     steps:
       - uses: actions/checkout@v4
         with:
           ref: codex/v0.2.0-official-action
           submodules: "recursive"
+          path: bpftime
 
       - name: install deps
         run: |
@@ -125,5 +129,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: v020-official-ssl-nginx-results
-          path: benchmark-results-v020-official-ssl-nginx.tar.gz
+          path: bpftime/benchmark-results-v020-official-ssl-nginx.tar.gz
           if-no-files-found: warn

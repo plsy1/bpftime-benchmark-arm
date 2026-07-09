@@ -15,12 +15,16 @@ jobs:
     name: official v0.2.0 benchmark logic
     runs-on: ubuntu-latest
     timeout-minutes: 360
+    defaults:
+      run:
+        working-directory: bpftime
 
     steps:
       - uses: actions/checkout@v3
         with:
           ref: codex/v0.2.0-official-action
           submodules: "recursive"
+          path: bpftime
 
       - name: install deps
         run: |
@@ -89,5 +93,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: v020-official-benchmark-results
-          path: benchmark-results-v020-official.tar.gz
+          path: bpftime/benchmark-results-v020-official.tar.gz
           if-no-files-found: warn

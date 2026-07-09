@@ -1,0 +1,119 @@
+name: ARM64 Jetson Userspace Container Repro
+
+on:
+  workflow_dispatch:
+    inputs:
+      benchmark:
+        description: "Benchmark to run inside the Jetson userspace container"
+        required: false
+        default: "ssl-nginx"
+        type: choice
+        options:
+          - smoke
+          - uprobe
+          - syscount-nginx
+          - ssl-nginx
+      ssl_sizes:
+        description: "Comma-separated ssl-nginx payload sizes"
+        required: false
+        default: "1kb"
+      uprobe_iter:
+        description: "Outer iterations for uprobe"
+        required: false
+        default: "10"
+      uprobe_test_iter:
+        description: "Inner iterations for uprobe"
+        required: false
+        default: "100000"
+      upload_image:
+        description: "Also upload the built container image as an artifact"
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  jetson-userspace-container-repro:
+    name: jetson userspace container repro
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 480
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Show host runner information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+          docker version
+          docker info
+
+      - name: Build Jetson userspace image
+        run: |
+          docker build \
+            --platform linux/arm64 \
+            -f docker/jetson-repro/Dockerfile \
+            -t bpftime-benchmark-jetson-userspace:20260709 \
+            .
+
+      - name: Run benchmark inside container
+        env:
+          BENCHMARK: ${{ github.event.inputs.benchmark || 'ssl-nginx' }}
+          SSL_SIZES: ${{ github.event.inputs.ssl_sizes || '1kb' }}
+          UPROBE_ITER: ${{ github.event.inputs.uprobe_iter || '10' }}
+          UPROBE_TEST_ITER: ${{ github.event.inputs.uprobe_test_iter || '100000' }}
+        run: |
+          mkdir -p docker-results
+
+          case "$BENCHMARK" in
+            smoke)
+              docker/jetson-repro/run-container.sh \
+                ./run_bpftime_arm64_benchmarks.sh \
+                --mode smoke \
+                --skip-syscall
+              ;;
+            uprobe)
+              docker/jetson-repro/run-container.sh \
+                ./run_bpftime_arm64_benchmarks.sh \
+                --mode full \
+                --only uprobe \
+                --uprobe-iter "$UPROBE_ITER" \
+                --uprobe-test-iter "$UPROBE_TEST_ITER"
+              ;;
+            syscount-nginx)
+              docker/jetson-repro/run-container.sh \
+                ./run_bpftime_arm64_benchmarks.sh \
+                --mode full \
+                --only syscount-nginx
+              ;;
+            ssl-nginx)
+              docker/jetson-repro/run-container.sh \
+                ./run_bpftime_arm64_benchmarks.sh \
+                --mode full \
+                --only ssl-nginx \
+                --ssl-sizes "$SSL_SIZES"
+              ;;
+            *)
+              echo "Unknown benchmark: $BENCHMARK" >&2
+              exit 2
+              ;;
+          esac
+
+      - name: Export container image
+        if: always() && github.event.inputs.upload_image == 'true'
+        run: |
+          docker save bpftime-benchmark-jetson-userspace:20260709 \
+            | gzip > bpftime-benchmark-jetson-userspace-20260709.tar.gz
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arm64-jetson-userspace-container-results
+          path: |
+            docker-results/**
+            bpftime-benchmark-jetson-userspace-20260709.tar.gz
+          if-no-files-found: warn

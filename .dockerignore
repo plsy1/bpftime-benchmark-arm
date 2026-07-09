@@ -1,0 +1,15 @@
+.git
+build
+build-*
+benchmark-results-*
+*.tar.gz
+*.zip
+**/__pycache__
+**/*.pyc
+**/trace_logs
+**/access.log
+**/benchmark_chart.png
+**/benchmark_results_*.json
+**/size_benchmark_*.json
+**/size_benchmark_*.txt
+example/tracing/sslsniff/sslsniff.c.diagnostic-bak-*

@@ -1,0 +1,129 @@
+name: v0.2.0 Official SSL-nginx
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  ssl-nginx:
+    name: official v0.2.0 ssl-nginx
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/v0.2.0-official-action
+          submodules: "recursive"
+
+      - name: install deps
+        run: |
+          sudo apt update
+          wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && sudo ./llvm.sh 17
+          sudo apt update
+          sudo apt install -y --no-install-recommends \
+            autoconf \
+            automake \
+            binutils-dev \
+            build-essential \
+            ca-certificates \
+            clang \
+            cmake \
+            curl \
+            git \
+            libboost-all-dev \
+            libelf-dev \
+            libncurses-dev \
+            libssl-dev \
+            libtool \
+            libyaml-cpp-dev \
+            llvm \
+            llvm-dev \
+            nginx \
+            pkg-config \
+            python-is-python3 \
+            python3 \
+            python3-matplotlib \
+            python3-numpy \
+            systemtap-sdt-dev \
+            wrk \
+            zlib1g-dev
+
+      - name: show runner information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+          nginx -v || true
+          openssl version || true
+          wrk -v || true
+          llvm-config-17 --version || true
+          llvm-config-17 --cmakedir || true
+          clang --version || true
+          git rev-parse HEAD
+          git status --short
+
+      - name: build official v0.2.0 ssl-nginx artifacts
+        run: |
+          set -euxo pipefail
+          LLVM_DIR="$(llvm-config-17 --cmakedir)"
+          cmake -Bbuild \
+            -DLLVM_DIR="$LLVM_DIR" \
+            -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo \
+            -DBPFTIME_LLVM_JIT=1 \
+            -DBPFTIME_ENABLE_LTO=1 \
+            -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO \
+            -DENABLE_PROBE_WRITE_CHECK=0 \
+            -DENABLE_PROBE_READ_CHECK=0 \
+            -DBUILD_ATTACH_IMPL_EXAMPLE=1
+          cmake --build build --config RelWithDebInfo --target install -j"$(nproc)"
+          cmake --build build --config RelWithDebInfo --target attach_impl_example_nginx -j"$(nproc)" || true
+          make -C benchmark/ssl-nginx
+
+          # v0.2.0 benchmark.py refers to example/sslsniff/sslsniff, while
+          # v0.2.0 Makefile builds example/tracing/sslsniff/sslsniff.
+          mkdir -p example/sslsniff
+          ln -sf ../tracing/sslsniff/sslsniff example/sslsniff/sslsniff
+          ls -l example/sslsniff/sslsniff
+
+      - name: run official ssl-nginx size benchmark
+        run: |
+          set -euxo pipefail
+          mkdir -p benchmark-results-v020-official-ssl-nginx
+          python3 benchmark/ssl-nginx/draw_figture.py \
+            2>&1 | tee benchmark-results-v020-official-ssl-nginx/draw_figture.log
+
+      - name: collect benchmark outputs
+        if: always()
+        run: |
+          set +e
+          mkdir -p benchmark-results-v020-official-ssl-nginx/files
+          {
+            echo "date: $(date -Is)"
+            echo "uname: $(uname -a)"
+            echo "arch: $(uname -m)"
+            echo "nproc: $(nproc)"
+            echo
+            cat /etc/os-release 2>/dev/null || true
+          } > benchmark-results-v020-official-ssl-nginx/system-info.txt
+          git rev-parse HEAD > benchmark-results-v020-official-ssl-nginx/git-info.txt 2>&1 || true
+          git status --short >> benchmark-results-v020-official-ssl-nginx/git-info.txt 2>&1 || true
+          cp -a benchmark/ssl-nginx/size_benchmark_* benchmark-results-v020-official-ssl-nginx/files/ 2>/dev/null || true
+          cp -a benchmark/ssl-nginx/benchmark_results_* benchmark-results-v020-official-ssl-nginx/files/ 2>/dev/null || true
+          cp -a benchmark/ssl-nginx/*.png benchmark-results-v020-official-ssl-nginx/files/ 2>/dev/null || true
+          cp -a benchmark/ssl-nginx/index.html benchmark-results-v020-official-ssl-nginx/files/ 2>/dev/null || true
+          tar -czf benchmark-results-v020-official-ssl-nginx.tar.gz benchmark-results-v020-official-ssl-nginx
+
+      - name: upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v020-official-ssl-nginx-results
+          path: benchmark-results-v020-official-ssl-nginx.tar.gz
+          if-no-files-found: warn

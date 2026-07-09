@@ -1,4 +1,4 @@
-name: v0.2.0 Official Benchmarks
+name: v0.2.0 Official Microbenchmarks (No SSL-nginx)
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   build-and-run:
-    name: official v0.2.0 benchmark logic
+    name: official v0.2.0 microbenchmark logic
     runs-on: ubuntu-latest
     timeout-minutes: 360
     defaults:
@@ -92,6 +92,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: v020-official-benchmark-results
+          name: v020-official-microbenchmark-results
           path: bpftime/benchmark-results-v020-official.tar.gz
           if-no-files-found: warn

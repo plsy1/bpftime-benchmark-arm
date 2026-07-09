@@ -15,6 +15,9 @@ jobs:
     name: official v0.2.0 ssl-nginx
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 360
+    env:
+      CLANG: clang-15
+      LD_LIBRARY_PATH: /usr/lib/llvm-15/lib
     defaults:
       run:
         working-directory: bpftime
@@ -49,6 +52,9 @@ jobs:
             libyaml-cpp-dev \
             llvm \
             llvm-dev \
+            clang-15 \
+            llvm-15 \
+            llvm-15-dev \
             nginx \
             pkg-config \
             python-is-python3 \
@@ -69,14 +75,18 @@ jobs:
           wrk -v || true
           llvm-config-17 --version || true
           llvm-config-17 --cmakedir || true
+          llvm-config-15 --version || true
+          llvm-config-15 --cmakedir || true
           clang --version || true
+          clang-15 --version || true
+          test -d /usr/lib/llvm-15/cmake
           git rev-parse HEAD
           git status --short
 
       - name: build official v0.2.0 ssl-nginx artifacts
         run: |
           set -euxo pipefail
-          LLVM_DIR="$(llvm-config-17 --cmakedir)"
+          LLVM_DIR="$(llvm-config-15 --cmakedir)"
           cmake -Bbuild \
             -DLLVM_DIR="$LLVM_DIR" \
             -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo \

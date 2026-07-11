@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: plsy1/bpftime
+          repository: plsy1/bpftime-benchmark
           ref: codex/jetson-no-btf-docker
           submodules: recursive
           path: bpftime

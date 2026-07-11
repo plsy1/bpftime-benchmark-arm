@@ -81,3 +81,46 @@ If the same image gives different `ssl-nginx` results on another ARM64 host, the
 - scheduler and IRQ behavior
 - power/thermal policy
 - BTF/vmlinux availability for other benchmarks
+
+## Official Master No-BTF Image
+
+`codex/jetson-no-btf-docker` preserves the official bpftime master commit plus
+the Jetson compatibility build for hosts without `/sys/kernel/btf/vmlinux`.
+It keeps `.BTF` for skeleton generation, removes `.BTF.ext`, and disables
+CO-RE relocations in the local ARM64 vmlinux header. The corresponding ARM64
+image is published by the `Build Jetson No-BTF Image` workflow.
+
+Run the published image on Jetson without host networking:
+
+```bash
+IMAGE=ghcr.io/plsy1/bpftime:jetson-no-btf-arm64
+NAME=bpftime-official-master-arm64-run
+
+sudo docker pull "$IMAGE"
+sudo docker rm -f "$NAME" 2>/dev/null || true
+sudo docker run -d \
+  --name "$NAME" \
+  --privileged \
+  -v /sys:/sys:ro \
+  -v /lib/modules:/lib/modules:ro \
+  "$IMAGE" sleep infinity
+```
+
+Run the unmodified official master full-size SSL-nginx driver in tmux:
+
+```bash
+LOG="$HOME/official-master-ssl-$(date +%Y%m%d_%H%M%S).log"
+tmux new-session -d -s official-master-ssl-benchmark \
+  "sudo docker exec $NAME bash -lc \
+  'cd /bpftime && python3 benchmark/ssl-nginx/draw_figture.py' \
+  2>&1 | tee '$LOG'"
+```
+
+Copy completed result files to the host:
+
+```bash
+OUT="$HOME/bpftime-official-master-results-$(date +%Y%m%d_%H%M%S)"
+mkdir -p "$OUT"
+sudo docker cp "$NAME:/bpftime/benchmark/ssl-nginx/size_benchmark_YYYYMMDD_HHMMSS.json" "$OUT/"
+sudo docker cp "$NAME:/bpftime/benchmark/ssl-nginx/size_benchmark_YYYYMMDD_HHMMSS.txt" "$OUT/"
+```

@@ -2,7 +2,7 @@
 #define __VMLINUX_H__
 
 #ifndef BPF_NO_PRESERVE_ACCESS_INDEX
-#pragma clang attribute push (__attribute__((preserve_access_index)), apply_to = record)
+/* Jetson lacks host BTF, so compile this local BPF object without CO-RE relocations. */
 #endif
 
 typedef unsigned char __u8;
@@ -91419,7 +91419,7 @@ struct mptcp_diag_ctx {
 };
 
 #ifndef BPF_NO_PRESERVE_ACCESS_INDEX
-#pragma clang attribute pop
+/* preserve_access_index is intentionally disabled for the Jetson no-BTF build. */
 #endif
 
 #endif /* __VMLINUX_H__ */

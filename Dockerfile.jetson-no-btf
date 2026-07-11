@@ -1,0 +1,33 @@
+FROM ubuntu:24.04
+WORKDIR /bpftime
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libelf1 libelf-dev zlib1g-dev make cmake git libboost1.74-all-dev \
+        binutils-dev libyaml-cpp-dev gcc g++ ca-certificates \
+        clang-16 llvm-16 llvm-16-dev \
+        nginx wrk sudo python-is-python3 python3 python3-matplotlib python3-numpy \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+
+RUN git submodule update --init --recursive
+
+ENV BPFTIME_VM_NAME=llvm
+ENV LLVM_DIR=/usr/lib/llvm-16/lib/cmake/llvm
+ENV PATH="${PATH}:/usr/lib/llvm-16/bin:/root/.bpftime/"
+
+RUN rm -rf build && cmake -Bbuild \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DBUILD_BPFTIME_DAEMON=1 \
+    -DCMAKE_C_COMPILER=/usr/lib/llvm-16/bin/clang \
+    -DCMAKE_CXX_COMPILER=/usr/lib/llvm-16/bin/clang++ \
+    -DLLVM_CONFIG=/usr/lib/llvm-16/bin/llvm-config \
+    -DLLVM_DIR=/usr/lib/llvm-16/lib/cmake/llvm \
+    && cmake --build build -j"$(nproc)" \
+    && cmake --install build
+
+# Docker COPY preserves a restrictive host umask; nginx workers need to traverse this path.
+RUN chmod a+rx benchmark benchmark/ssl-nginx \
+    && make -C example/tracing/sslsniff -j"$(nproc)"
+
+CMD ["sleep", "infinity"]

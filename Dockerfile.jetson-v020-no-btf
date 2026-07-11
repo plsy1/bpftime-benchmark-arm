@@ -1,0 +1,36 @@
+FROM ubuntu:24.04
+WORKDIR /bpftime
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libelf1 libelf-dev zlib1g-dev make cmake git libboost1.74-all-dev \
+        binutils-dev libyaml-cpp-dev gcc g++ ca-certificates \
+        clang-15 llvm-15 llvm-15-dev \
+        nginx wrk sudo python-is-python3 python3 python3-matplotlib python3-numpy \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY . .
+
+ENV BPFTIME_VM_NAME=llvm
+ENV LLVM_DIR=/usr/lib/llvm-15/lib/cmake/llvm
+ENV PATH="${PATH}:/usr/lib/llvm-15/bin:/root/.bpftime/"
+
+RUN rm -rf build \
+    && cmake -Bbuild \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DBPFTIME_LLVM_JIT=1 \
+        -DBPFTIME_ENABLE_LTO=1 \
+        -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO \
+        -DENABLE_PROBE_WRITE_CHECK=0 \
+        -DENABLE_PROBE_READ_CHECK=0 \
+        -DBUILD_ATTACH_IMPL_EXAMPLE=1 \
+        -DLLVM_CONFIG=/usr/lib/llvm-15/bin/llvm-config \
+        -DLLVM_DIR=/usr/lib/llvm-15/lib/cmake/llvm \
+    && cmake --build build --target install -j"$(nproc)" \
+    && cmake --build build --target attach_impl_example_nginx -j"$(nproc)" \
+    && make -C example/tracing/sslsniff CLANG=clang-15 -j"$(nproc)" \
+    && mkdir -p example/sslsniff \
+    && ln -sf ../tracing/sslsniff/sslsniff example/sslsniff/sslsniff \
+    && chmod a+rx /bpftime benchmark benchmark/ssl-nginx \
+    && chmod a+r benchmark/ssl-nginx/index.html
+
+CMD ["sleep", "infinity"]

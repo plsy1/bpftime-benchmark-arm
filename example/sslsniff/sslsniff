@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# The native test needs the same memlock allowance as the privileged container.
+ulimit -l unlimited 2>/dev/null || true
+exec "$(dirname "$0")/../tracing/sslsniff/sslsniff" "$@"

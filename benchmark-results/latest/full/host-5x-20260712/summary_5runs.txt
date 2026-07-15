@@ -1,0 +1,30 @@
+bpftime latest no-BTF ssl-nginx host benchmark - 5-run summary
+
+Source: size_benchmark_20260712_053504.txt through size_benchmark_20260712_083932.txt
+Metric: Requests/sec, shown as mean +/- sample standard deviation
+BPFtime vs Kernel: (mean BPFtime - mean Kernel) / mean Kernel; positive means BPFtime is faster
+
+Size    Baseline             Kernel               BPFtime              BPFtime vs Kernel   Wins
+16b     17216.28 +/- 53.92    11152.89 +/- 67.28    11848.66 +/- 578.72   +6.24%              4/5
+1kb     16601.15 +/- 47.46    10650.50 +/- 229.47   11013.09 +/- 464.45   +3.40%              4/5
+2kb     15792.95 +/- 59.98    10344.03 +/- 86.70    10672.29 +/- 492.89   +3.17%              4/5
+4kb     14954.71 +/- 48.51    10005.47 +/- 52.54    10781.30 +/- 448.61   +7.75%              5/5
+16kb     9873.68 +/- 21.72     6550.92 +/- 69.00     6299.24 +/- 240.36   -3.84%              0/5
+128kb    2819.79 +/- 6.83      1814.88 +/- 27.75     1833.89 +/- 54.83    +1.05%              4/5
+256kb    1550.41 +/- 6.64       979.98 +/- 20.35      944.65 +/- 28.18    -3.61%              0/5
+
+Baseline impact calculated from the five-run means:
+
+Size    Kernel impact    BPFtime impact
+16b     35.22%           31.18%
+1kb     35.84%           33.66%
+2kb     34.50%           32.42%
+4kb     33.09%           27.91%
+16kb    33.65%           36.20%
+128kb   35.64%           34.96%
+256kb   36.79%           39.07%
+
+Summary:
+- BPFtime is faster than kernel at 16b, 1kb, 2kb, and 4kb in 4/5 or 5/5 runs.
+- BPFtime is slower than kernel at 16kb and 256kb in all 5 runs.
+- 128kb is effectively close: BPFtime leads by 1.05% on the mean, with a larger run-to-run spread than kernel.

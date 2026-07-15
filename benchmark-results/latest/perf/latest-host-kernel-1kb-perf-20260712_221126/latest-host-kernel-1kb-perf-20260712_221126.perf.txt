@@ -1,0 +1,9 @@
+
+ Performance counter stats for process id '3562076':
+
+     <not counted> msec task-clock                                                            
+     <not counted>      cycles                                                                
+     <not counted>      instructions                                                          
+
+       5.001552106 seconds time elapsed
+

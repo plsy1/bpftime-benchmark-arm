@@ -1,0 +1,15 @@
+{
+  "timestamp": "20260713_174442",
+  "runs": 1,
+  "results": {
+    "baseline": [
+      14872.29
+    ],
+    "kernel_sslsniff": [
+      10109.8
+    ],
+    "bpftime_sslsniff": [
+      9939.1
+    ]
+  }
+}

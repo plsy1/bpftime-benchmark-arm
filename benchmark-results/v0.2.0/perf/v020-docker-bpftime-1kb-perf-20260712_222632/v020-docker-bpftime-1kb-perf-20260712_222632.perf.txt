@@ -1,0 +1,9 @@
+
+ Performance counter stats for process id '3567175':
+
+           1692.25 msec task-clock:u                     #    0.338 CPUs utilized             
+        1580304487      cycles:u                         #    0.934 GHz                       
+        5222096413      instructions:u                   #    3.30  insn per cycle            
+
+       5.001546626 seconds time elapsed
+

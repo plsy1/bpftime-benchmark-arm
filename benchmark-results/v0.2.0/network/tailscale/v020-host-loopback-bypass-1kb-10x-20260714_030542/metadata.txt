@@ -1,0 +1,28 @@
+timestamp=20260714_030542
+rule_comment=bpftime-loopback-bypass-20260714_030542
+rollback_unit=bpftime-loopback-rollback-20260714-030542
+build=/home/jetson/src/bpftime-v020-no-btf/build-boost174
+original_index_size=262144 owner=jetson:jetson mode=600
+iptables_before:
+:INPUT ACCEPT [2029265153:9214818782473]
+:ts-input - [0:0]
+[2031936729:9215231506211] -A INPUT -j ts-input
+[0:0] -A ts-input -s 100.101.117.82/32 -i lo -j ACCEPT
+[1298566:140178734] -A ts-input -i tailscale0 -j ACCEPT
+[1373010:272545004] -A ts-input -p udp -m udp --dport 41641 -j ACCEPT
+[0:0] -A ts-input -s 100.115.92.0/23 ! -i tailscale0 -j RETURN
+[0:0] -A ts-input -s 100.64.0.0/10 ! -i tailscale0 -j DROP
+:INPUT ACCEPT [0:0]
+iptables_after:
+:INPUT ACCEPT [2029267704:9214820758660]
+:ts-input - [0:0]
+[8012589:5834726307] -A INPUT -s 127.0.0.0/8 -d 127.0.0.0/8 -i lo -m comment --comment bpftime-loopback-bypass-20260714_030542 -j ACCEPT
+[2031941343:9215233712061] -A INPUT -j ts-input
+[0:0] -A ts-input -s 100.101.117.82/32 -i lo -j ACCEPT
+[1299461:140237635] -A ts-input -i tailscale0 -j ACCEPT
+[1374178:272715766] -A ts-input -p udp -m udp --dport 41641 -j ACCEPT
+[0:0] -A ts-input -s 100.115.92.0/23 ! -i tailscale0 -j RETURN
+[0:0] -A ts-input -s 100.64.0.0/10 ! -i tailscale0 -j DROP
+:INPUT ACCEPT [0:0]
+tailscale_after:
+connected

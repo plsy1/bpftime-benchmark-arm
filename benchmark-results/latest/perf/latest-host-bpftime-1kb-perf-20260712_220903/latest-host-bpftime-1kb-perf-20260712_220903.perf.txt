@@ -1,0 +1,9 @@
+
+ Performance counter stats for process id '3561486':
+
+           3673.48 msec task-clock:u                     #    0.734 CPUs utilized             
+        2898143659      cycles:u                         #    0.789 GHz                       
+        9654064923      instructions:u                   #    3.33  insn per cycle            
+
+       5.002071190 seconds time elapsed
+

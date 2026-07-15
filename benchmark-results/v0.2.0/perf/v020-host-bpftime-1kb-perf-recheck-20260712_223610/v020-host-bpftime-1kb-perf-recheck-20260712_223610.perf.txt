@@ -1,0 +1,9 @@
+
+ Performance counter stats for process id '3570033':
+
+           3554.86 msec task-clock:u                     #    0.711 CPUs utilized             
+        3526858772      cycles:u                         #    0.992 GHz                       
+       12059311016      instructions:u                   #    3.42  insn per cycle            
+
+       5.001546393 seconds time elapsed
+

@@ -1,0 +1,9 @@
+
+ Performance counter stats for process id '3571916':
+
+           3149.24 msec task-clock:u                     #    0.630 CPUs utilized             
+        2966487304      cycles:u                         #    0.942 GHz                       
+        9871434762      instructions:u                   #    3.33  insn per cycle            
+
+       5.001472320 seconds time elapsed
+

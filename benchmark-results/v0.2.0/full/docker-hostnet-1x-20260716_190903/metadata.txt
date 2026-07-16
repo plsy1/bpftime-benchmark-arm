@@ -1,0 +1,7 @@
+started_at=20260716_190903
+image=bpftime:v020-no-btf-verify
+image_id=sha256:7fa6483d24cfaef9af93b9be6433b3f861f638caf2e1039a46a6775fecf8affc
+container=bpftime-v020-no-btf-hostnet
+network_mode=host
+ipc_mode=private
+pid_mode=host

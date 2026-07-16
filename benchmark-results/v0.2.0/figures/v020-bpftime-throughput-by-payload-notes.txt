@@ -1,0 +1,8 @@
+Data selection for v020-bpftime-throughput-by-payload
+
+- Metric: BPFtime sslsniff Requests/sec (higher is better).
+- Host direct, Tailscale on: 10 complete campaigns; each plotted input is the mean of 10 wrk runs.
+- Host direct, Tailscale off: one complete campaign; each point is the mean of 10 wrk runs.
+- Docker bridge/private netns: the three selected complete campaigns, July 13 runs 03-05.
+- July 13 Docker runs 01-02 were excluded because their result tables contain N/A fields.
+- Docker host netns: one complete full-payload campaign; each point is the mean of 10 wrk runs.

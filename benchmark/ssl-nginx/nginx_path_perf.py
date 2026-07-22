@@ -135,9 +135,20 @@ def parse_perf(path: Path) -> dict[str, float]:
             if not raw or raw.startswith("<"):
                 continue
             try:
-                values[event] = float(raw)
+                value = float(raw)
             except ValueError:
                 continue
+            if event == "task-clock":
+                unit = row[1].strip().lower()
+                if unit == "msec":
+                    value *= 1_000_000
+                elif unit in ("usec", "µsec"):
+                    value *= 1_000
+                elif unit in ("sec", "seconds"):
+                    value *= 1_000_000_000
+                # Newer perf CSV output leaves the unit empty and reports the
+                # software task-clock event in nanoseconds.
+            values[event] = value
     return values
 
 
@@ -243,14 +254,26 @@ def stop_process(process: subprocess.Popen[object] | None) -> None:
         process.wait(timeout=3)
 
 
-def instructions_per_request(perf: dict[str, float], denominator: float) -> dict[str, float]:
-    required = ("instructions:u", "instructions:k")
-    missing = [event for event in required if event not in perf]
-    if missing:
-        raise RuntimeError(f"Missing perf instruction counters: {missing}; parsed={perf}")
-    user = perf["instructions:u"] / denominator
-    kernel = perf["instructions:k"] / denominator
-    return {"user": user, "kernel": kernel, "total": user + kernel}
+def cost_per_request(perf: dict[str, float], denominator: float) -> dict[str, float | None]:
+    if "task-clock" not in perf:
+        raise RuntimeError(f"Missing mandatory task-clock counter; parsed={perf}")
+    result: dict[str, float | None] = {
+        "task_clock_ns": perf["task-clock"] / denominator,
+        "instructions_user": None,
+        "instructions_kernel": None,
+        "instructions_total": None,
+    }
+    if "instructions:u" in perf and "instructions:k" in perf:
+        user = perf["instructions:u"] / denominator
+        kernel = perf["instructions:k"] / denominator
+        result.update(
+            {
+                "instructions_user": user,
+                "instructions_kernel": kernel,
+                "instructions_total": user + kernel,
+            }
+        )
+    return result
 
 
 def run_case(
@@ -327,24 +350,18 @@ def run_case(
         role_costs: dict[str, object] = {
             "nginx": {
                 "perf": nginx_perf,
-                "instructions_per_request": instructions_per_request(
-                    nginx_perf, denominator
-                ),
+                "cost_per_request": cost_per_request(nginx_perf, denominator),
             },
             "wrk": {
                 "perf": wrk_perf,
-                "instructions_per_request": instructions_per_request(
-                    wrk_perf, denominator
-                ),
+                "cost_per_request": cost_per_request(wrk_perf, denominator),
             },
         }
         if reader_pid is not None:
             reader_perf = parse_perf(case_dir / "perf-sslsniff.csv")
             role_costs["sslsniff"] = {
                 "perf": reader_perf,
-                "instructions_per_request": instructions_per_request(
-                    reader_perf, denominator
-                ),
+                "cost_per_request": cost_per_request(reader_perf, denominator),
             }
 
         result: dict[str, object] = {
@@ -378,14 +395,26 @@ def stdev(values: list[float]) -> float:
     return statistics.stdev(values) if len(values) > 1 else 0.0
 
 
-def metric(result: dict[str, object], role: str, field: str) -> float:
+def role_metric(result: dict[str, object], role: str, field: str) -> float | None:
     roles = result["roles"]
     assert isinstance(roles, dict)
     role_data = roles[role]
     assert isinstance(role_data, dict)
-    instructions = role_data["instructions_per_request"]
-    assert isinstance(instructions, dict)
-    return float(instructions[field])
+    costs = role_data["cost_per_request"]
+    assert isinstance(costs, dict)
+    value = costs[field]
+    return None if value is None else float(value)
+
+
+def required_role_metric(result: dict[str, object], role: str, field: str) -> float:
+    value = role_metric(result, role, field)
+    if value is None:
+        raise RuntimeError(f"Missing mandatory {role} metric: {field}")
+    return value
+
+
+def summarized(values: list[float]) -> dict[str, float]:
+    return {"mean": mean(values), "stdev": stdev(values)}
 
 
 def summarize(results: list[dict[str, object]], output: Path) -> dict[str, object]:
@@ -396,65 +425,99 @@ def summarize(results: list[dict[str, object]], output: Path) -> dict[str, objec
             continue
         values: dict[str, list[float]] = {
             "rps": [float(result["requests_per_sec"]) for result in samples],
-            "nginx_user_insn_per_request": [metric(result, "nginx", "user") for result in samples],
-            "nginx_kernel_insn_per_request": [metric(result, "nginx", "kernel") for result in samples],
-            "nginx_total_insn_per_request": [metric(result, "nginx", "total") for result in samples],
+            "nginx_task_clock_ns_per_request": [
+                required_role_metric(result, "nginx", "task_clock_ns")
+                for result in samples
+            ],
         }
         if mode != "baseline":
-            values["reader_total_insn_per_request"] = [
-                metric(result, "sslsniff", "total") for result in samples
+            values["reader_task_clock_ns_per_request"] = [
+                required_role_metric(result, "sslsniff", "task_clock_ns")
+                for result in samples
             ]
-        groups[mode] = {
-            "n": len(samples),
-            **{
-                name: {"mean": mean(metric_values), "stdev": stdev(metric_values)}
-                for name, metric_values in values.items()
-            },
-        }
+        optional_specs = (
+            ("nginx_user_insn_per_request", "nginx", "instructions_user"),
+            ("nginx_kernel_insn_per_request", "nginx", "instructions_kernel"),
+            ("nginx_total_insn_per_request", "nginx", "instructions_total"),
+        )
+        if mode != "baseline":
+            optional_specs += (
+                ("reader_total_insn_per_request", "sslsniff", "instructions_total"),
+            )
+        for name, role, field in optional_specs:
+            metric_values = [role_metric(result, role, field) for result in samples]
+            if all(value is not None for value in metric_values):
+                values[name] = [float(value) for value in metric_values if value is not None]
+        groups[mode] = {"n": len(samples)}
+        assert isinstance(groups[mode], dict)
+        groups[mode].update({name: summarized(metric_values) for name, metric_values in values.items()})
 
     by_key = {(int(result["round"]), str(result["mode"])): result for result in results}
     overhead_rows: list[dict[str, object]] = []
     for round_number in sorted({int(result["round"]) for result in results}):
         baseline = by_key[(round_number, "baseline")]
-        baseline_nginx = metric(baseline, "nginx", "total")
+        baseline_nginx_cpu = required_role_metric(baseline, "nginx", "task_clock_ns")
+        baseline_nginx_insn = role_metric(baseline, "nginx", "instructions_total")
         for mode in MODES[1:]:
             traced = by_key[(round_number, mode)]
-            nginx_delta = metric(traced, "nginx", "total") - baseline_nginx
-            reader = metric(traced, "sslsniff", "total")
-            overhead_rows.append(
-                {
-                    "round": round_number,
-                    "mode": mode,
-                    "nginx_delta_instructions_per_request": nginx_delta,
-                    "reader_instructions_per_request": reader,
-                    "attributed_instructions_per_request": nginx_delta + reader,
-                }
-            )
+            nginx_cpu = required_role_metric(traced, "nginx", "task_clock_ns")
+            reader_cpu = required_role_metric(traced, "sslsniff", "task_clock_ns")
+            row: dict[str, object] = {
+                "round": round_number,
+                "mode": mode,
+                "nginx_delta_cpu_ns_per_request": nginx_cpu - baseline_nginx_cpu,
+                "reader_cpu_ns_per_request": reader_cpu,
+                "attributed_cpu_ns_per_request": nginx_cpu - baseline_nginx_cpu + reader_cpu,
+            }
+            nginx_insn = role_metric(traced, "nginx", "instructions_total")
+            reader_insn = role_metric(traced, "sslsniff", "instructions_total")
+            if baseline_nginx_insn is not None and nginx_insn is not None and reader_insn is not None:
+                row.update(
+                    {
+                        "nginx_delta_instructions_per_request": nginx_insn - baseline_nginx_insn,
+                        "reader_instructions_per_request": reader_insn,
+                        "attributed_instructions_per_request": nginx_insn - baseline_nginx_insn + reader_insn,
+                    }
+                )
+            overhead_rows.append(row)
 
     overhead: dict[str, object] = {}
     for mode in MODES[1:]:
         samples = [row for row in overhead_rows if row["mode"] == mode]
         overhead[mode] = {"n": len(samples)}
         for name in (
+            "nginx_delta_cpu_ns_per_request",
+            "reader_cpu_ns_per_request",
+            "attributed_cpu_ns_per_request",
             "nginx_delta_instructions_per_request",
             "reader_instructions_per_request",
             "attributed_instructions_per_request",
         ):
-            values = [float(row[name]) for row in samples]
+            values = [float(row[name]) for row in samples if name in row]
+            if not values:
+                continue
             assert isinstance(overhead[mode], dict)
-            overhead[mode][name] = {"mean": mean(values), "stdev": stdev(values)}
+            overhead[mode][name] = summarized(values)
 
-    bpftime_delta = overhead["bpftime"]["nginx_delta_instructions_per_request"]["mean"]
-    ratios = {}
+    bpftime_cpu_delta = overhead["bpftime"]["nginx_delta_cpu_ns_per_request"]["mean"]
+    cpu_ratios = {}
     for kernel_mode in ("kernel-global", "kernel-nginx-only"):
-        kernel_delta = overhead[kernel_mode]["nginx_delta_instructions_per_request"]["mean"]
-        ratios[kernel_mode] = bpftime_delta / kernel_delta
+        kernel_delta = overhead[kernel_mode]["nginx_delta_cpu_ns_per_request"]["mean"]
+        cpu_ratios[kernel_mode] = bpftime_cpu_delta / kernel_delta
+
+    instruction_ratios: dict[str, float] = {}
+    if "nginx_delta_instructions_per_request" in overhead["bpftime"]:
+        bpftime_insn_delta = overhead["bpftime"]["nginx_delta_instructions_per_request"]["mean"]
+        for kernel_mode in ("kernel-global", "kernel-nginx-only"):
+            kernel_delta = overhead[kernel_mode]["nginx_delta_instructions_per_request"]["mean"]
+            instruction_ratios[kernel_mode] = bpftime_insn_delta / kernel_delta
 
     summary = {
         "groups": groups,
         "overhead": overhead,
         "overhead_rows": overhead_rows,
-        "bpftime_nginx_delta_ratio": ratios,
+        "bpftime_nginx_delta_cpu_ratio": cpu_ratios,
+        "bpftime_nginx_delta_instruction_ratio": instruction_ratios,
     }
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 
@@ -463,9 +526,9 @@ def summarize(results: list[dict[str, object]], output: Path) -> dict[str, objec
         "",
         "## Result",
         "",
-        "Three short 16-byte rounds. Hardware counters are attached to the nginx worker and sslsniff reader separately.",
+        "Three short 16-byte rounds. perf is attached to the nginx worker and sslsniff reader separately.",
         "",
-        "| Mode | N | RPS | nginx total insn/request | reader insn/request |",
+        "| Mode | N | RPS | nginx CPU us/request | reader CPU us/request |",
         "|---|---:|---:|---:|---:|",
     ]
     for mode in MODES:
@@ -473,33 +536,61 @@ def summarize(results: list[dict[str, object]], output: Path) -> dict[str, objec
         reader = (
             "—"
             if mode == "baseline"
-            else f"{group['reader_total_insn_per_request']['mean']:.1f}"
+            else f"{group['reader_task_clock_ns_per_request']['mean'] / 1000:.3f}"
         )
         lines.append(
             f"| {mode} | {group['n']} | {group['rps']['mean']:.2f} "
-            f"| {group['nginx_total_insn_per_request']['mean']:.1f} | {reader} |"
+            f"| {group['nginx_task_clock_ns_per_request']['mean'] / 1000:.3f} | {reader} |"
         )
     lines += [
         "",
         "## Same-round attributed overhead",
         "",
-        "`nginx delta = traced nginx instructions/request - same-round baseline nginx instructions/request`",
+        "`nginx delta = traced nginx CPU time/request - same-round baseline nginx CPU time/request`",
         "",
-        "| Mode | nginx delta insn/request | reader insn/request | attributed total insn/request |",
+        "| Mode | nginx delta us/request | reader us/request | attributed total us/request |",
         "|---|---:|---:|---:|",
     ]
     for mode in MODES[1:]:
         item = overhead[mode]
         lines.append(
-            f"| {mode} | {item['nginx_delta_instructions_per_request']['mean']:.1f} "
-            f"| {item['reader_instructions_per_request']['mean']:.1f} "
-            f"| {item['attributed_instructions_per_request']['mean']:.1f} |"
+            f"| {mode} | {item['nginx_delta_cpu_ns_per_request']['mean'] / 1000:.3f} "
+            f"| {item['reader_cpu_ns_per_request']['mean'] / 1000:.3f} "
+            f"| {item['attributed_cpu_ns_per_request']['mean'] / 1000:.3f} |"
         )
     lines += [
         "",
-        f"BPFtime/kernel-global nginx-delta ratio: **{ratios['kernel-global']:.3f}x**.",
+        f"BPFtime/kernel-global nginx CPU-delta ratio: **{cpu_ratios['kernel-global']:.3f}x**.",
         "",
-        f"BPFtime/kernel-nginx-only nginx-delta ratio: **{ratios['kernel-nginx-only']:.3f}x**.",
+        f"BPFtime/kernel-nginx-only nginx CPU-delta ratio: **{cpu_ratios['kernel-nginx-only']:.3f}x**.",
+    ]
+    if instruction_ratios:
+        lines += [
+            "",
+            "## Hardware instructions",
+            "",
+            "| Mode | nginx delta insn/request | reader insn/request | attributed total insn/request |",
+            "|---|---:|---:|---:|",
+        ]
+        for mode in MODES[1:]:
+            item = overhead[mode]
+            lines.append(
+                f"| {mode} | {item['nginx_delta_instructions_per_request']['mean']:.1f} "
+                f"| {item['reader_instructions_per_request']['mean']:.1f} "
+                f"| {item['attributed_instructions_per_request']['mean']:.1f} |"
+            )
+        lines += [
+            "",
+            f"BPFtime/kernel-global nginx instruction-delta ratio: **{instruction_ratios['kernel-global']:.3f}x**.",
+            "",
+            f"BPFtime/kernel-nginx-only nginx instruction-delta ratio: **{instruction_ratios['kernel-nginx-only']:.3f}x**.",
+        ]
+    else:
+        lines += [
+            "",
+            "Hardware cycles/instructions were unavailable on this GitHub-hosted x64 runner; CPU task-clock is the primary path-cost metric.",
+        ]
+    lines += [
         "",
         "## Interpretation limits",
         "",

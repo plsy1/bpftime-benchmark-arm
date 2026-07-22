@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   nginx-path-perf:
-    name: x64 nginx and reader instruction accounting
+    name: x64 nginx and reader CPU-path accounting
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
@@ -74,7 +74,7 @@ jobs:
             zlib1g-dev
           sudo apt install -y --no-install-recommends "linux-tools-$(uname -r)" || true
 
-      - name: configure perf access and verify hardware counters
+      - name: configure perf access and verify counters
         run: |
           set -euxo pipefail
           sudo sysctl -w kernel.perf_event_paranoid=-1 || true
@@ -91,9 +91,12 @@ jobs:
             -e task-clock,cycles:u,instructions:u,cycles:k,instructions:k \
             -- sleep 1 2> "$RUNNER_TEMP/perf-preflight.csv"
           cat "$RUNNER_TEMP/perf-preflight.csv"
-          if grep -Eq '<not supported>|<not counted>' "$RUNNER_TEMP/perf-preflight.csv"; then
-            echo "Required x64 hardware counters are unavailable on this runner" >&2
+          if ! grep -Eq '^[0-9]+([.][0-9]+)?,[^,]*,task-clock,' "$RUNNER_TEMP/perf-preflight.csv"; then
+            echo "Required task-clock counter is unavailable on this runner" >&2
             exit 1
+          fi
+          if grep -Eq '<not supported>|<not counted>' "$RUNNER_TEMP/perf-preflight.csv"; then
+            echo "Hardware instructions are unavailable; the test will use task-clock per request"
           fi
 
       - name: show runner information

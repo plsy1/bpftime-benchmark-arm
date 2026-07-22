@@ -12,6 +12,14 @@
 
 namespace
 {
+constexpr size_t perf_event_record_alignment = 8;
+
+constexpr size_t aligned_perf_record_size(size_t size)
+{
+	return (size + perf_event_record_alignment - 1) &
+	       ~(perf_event_record_alignment - 1);
+}
+
 struct event_payload {
 	int producer;
 	int sequence;
@@ -101,8 +109,9 @@ TEST_CASE("Software perf event buffers shard concurrent producers by thread",
 		copy_from_perf_ring(base, ring_size, tail, &record_header,
 				    sizeof(record_header));
 		REQUIRE(record_header.type == PERF_RECORD_SAMPLE);
-		REQUIRE(record_header.size == sizeof(bpftime::perf_sample_raw) +
-						      sizeof(event_payload));
+		REQUIRE(record_header.size == aligned_perf_record_size(
+					      sizeof(bpftime::perf_sample_raw) +
+					      sizeof(event_payload)));
 
 		std::vector<uint8_t> record(record_header.size);
 		copy_from_perf_ring(base, ring_size, tail, record.data(),
@@ -169,8 +178,9 @@ TEST_CASE("Software perf event producer shards rotate after mmap resize",
 	copy_from_perf_ring(base, ring_size, tail, &record_header,
 			    sizeof(record_header));
 	REQUIRE(record_header.type == PERF_RECORD_SAMPLE);
-	REQUIRE(record_header.size ==
-		sizeof(bpftime::perf_sample_raw) + sizeof(event_payload));
+	REQUIRE(record_header.size == aligned_perf_record_size(
+				      sizeof(bpftime::perf_sample_raw) +
+				      sizeof(event_payload)));
 
 	std::vector<uint8_t> record(record_header.size);
 	copy_from_perf_ring(base, ring_size, tail, record.data(),
@@ -184,4 +194,67 @@ TEST_CASE("Software perf event producer shards rotate after mmap resize",
 	REQUIRE(actual.producer == payload.producer);
 	REQUIRE(actual.sequence == payload.sequence);
 	REQUIRE(tail + record_header.size == head);
+}
+
+TEST_CASE("Software perf event records remain aligned at the ring boundary",
+	  "[perf_event][software_perf_event]")
+{
+	const std::string shared_memory_name =
+		"SoftwarePerfEventAlignmentTestShm-" + std::to_string(getpid());
+	const size_t shared_memory_size = 16 * 1024 * 1024;
+	shm_remove remover{ std::string(shared_memory_name) };
+
+	boost::interprocess::managed_shared_memory shm(
+		boost::interprocess::create_only, shared_memory_name.c_str(),
+		shared_memory_size);
+	bpftime::software_perf_event_buffer buffer(
+		getpagesize(), shm.get_segment_manager());
+
+	const size_t ring_size = 64;
+	void *raw_buffer =
+		buffer.ensure_mmap_buffer(getpagesize() + ring_size);
+	REQUIRE(raw_buffer != nullptr);
+	auto *header = (perf_event_mmap_page *)raw_buffer;
+	auto *base = (uint8_t *)raw_buffer + getpagesize();
+	constexpr size_t expected_record_size = aligned_perf_record_size(
+		sizeof(bpftime::perf_sample_raw) + sizeof(event_payload));
+	static_assert(expected_record_size == 24);
+	bool reached_last_header_slot = false;
+
+	for (int sequence = 0; sequence < 8; sequence++) {
+		const uint64_t record_start = header->data_head;
+		event_payload payload{ 1, sequence };
+		REQUIRE(buffer.output_data(&payload, sizeof(payload)) == 0);
+		REQUIRE(header->data_head == record_start + expected_record_size);
+		REQUIRE((record_start & (ring_size - 1)) %
+				perf_event_record_alignment ==
+			0);
+
+		perf_event_header record_header;
+		copy_from_perf_ring(base, ring_size, record_start,
+				    &record_header, sizeof(record_header));
+		REQUIRE(record_header.type == PERF_RECORD_SAMPLE);
+		REQUIRE(record_header.size == expected_record_size);
+
+		std::vector<uint8_t> record(record_header.size);
+		copy_from_perf_ring(base, ring_size, record_start, record.data(),
+				    record.size());
+		auto *sample =
+			(const bpftime::perf_sample_raw *)record.data();
+		REQUIRE(sample->size == sizeof(event_payload));
+		for (size_t i = sizeof(bpftime::perf_sample_raw) +
+					sizeof(event_payload);
+		     i < record.size(); i++) {
+			REQUIRE(record[i] == 0);
+		}
+
+		if ((record_start & (ring_size - 1)) ==
+		    ring_size - sizeof(perf_event_header)) {
+			reached_last_header_slot = true;
+		}
+		// Simulate a consumer so repeated writes can walk around the ring.
+		header->data_tail = header->data_head;
+	}
+
+	REQUIRE(reached_last_header_slot);
 }

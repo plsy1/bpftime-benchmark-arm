@@ -126,6 +126,18 @@ struct software_perf_event_shard_cache_entry {
 constexpr size_t max_software_perf_event_shard_cache_entries = 64;
 constexpr uint64_t software_perf_event_reclaim_drain_interval = 64;
 constexpr size_t software_perf_event_reclaim_shard_threshold = 64;
+constexpr size_t perf_event_record_alignment = 8;
+
+bool align_perf_event_record_size(size_t size, size_t &aligned_size)
+{
+	constexpr size_t alignment_mask = perf_event_record_alignment - 1;
+	static_assert((perf_event_record_alignment & alignment_mask) == 0);
+	if (size > std::numeric_limits<size_t>::max() - alignment_mask) {
+		return false;
+	}
+	aligned_size = (size + alignment_mask) & ~alignment_mask;
+	return true;
+}
 
 thread_local std::unordered_map<const software_perf_event_data *,
 				software_perf_event_shard_cache_entry>
@@ -295,7 +307,11 @@ bool software_perf_event_buffer::append_record_parts(const void *first,
 	if (second_size > std::numeric_limits<size_t>::max() - first_size) {
 		return false;
 	}
-	const size_t record_size = first_size + second_size;
+	const size_t raw_record_size = first_size + second_size;
+	size_t record_size;
+	if (!align_perf_event_record_size(raw_record_size, record_size)) {
+		return false;
+	}
 	if (mmap_size() == 0 || record_size > mmap_size()) {
 		return false;
 	}
@@ -322,6 +338,11 @@ bool software_perf_event_buffer::append_record_parts(const void *first,
 	if (second_size > 0) {
 		write_wrapped(data_head + first_size, second, second_size);
 	}
+	if (record_size > raw_record_size) {
+		const uint8_t padding[perf_event_record_alignment - 1] = {};
+		write_wrapped(data_head + raw_record_size, padding,
+			      record_size - raw_record_size);
+	}
 	uint64_t new_head = data_head + record_size;
 	smp_store_release_u64(&header.data_head, new_head);
 	SPDLOG_DEBUG(
@@ -344,11 +365,22 @@ bool software_perf_event_buffer::append_sample(const perf_sample_raw &header,
 int software_perf_event_buffer::output_data(const void *buf, size_t size)
 {
 	SPDLOG_DEBUG("Handling perf event output data with size {}", size);
+	if (size > std::numeric_limits<uint32_t>::max() ||
+	    size > std::numeric_limits<size_t>::max() -
+			   sizeof(perf_sample_raw)) {
+		return -E2BIG;
+	}
+	size_t record_size;
+	if (!align_perf_event_record_size(sizeof(perf_sample_raw) + size,
+					  record_size) ||
+	    record_size > std::numeric_limits<uint16_t>::max()) {
+		return -E2BIG;
+	}
 	perf_sample_raw header;
 	header.header.type = PERF_RECORD_SAMPLE;
-	header.header.size = sizeof(header) + size;
+	header.header.size = static_cast<uint16_t>(record_size);
 	header.header.misc = 0;
-	header.size = size;
+	header.size = static_cast<uint32_t>(size);
 
 	append_sample(header, buf, size);
 	return 0;
@@ -407,7 +439,8 @@ bool software_perf_event_buffer::copy_next_record_to(
 	perf_event_header record_header;
 	read_wrapped(data_tail, &record_header, sizeof(record_header));
 	if (record_header.size < sizeof(record_header) ||
-	    record_header.size > mmap_size()) {
+	    record_header.size > mmap_size() ||
+	    record_header.size % perf_event_record_alignment != 0) {
 		SPDLOG_ERROR("Invalid perf record size {}, dropping shard data",
 			     record_header.size);
 		smp_store_release_u64(&header.data_tail, data_head);

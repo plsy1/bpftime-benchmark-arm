@@ -1,0 +1,180 @@
+name: Official No-BTF nginx Path Perf X64
+
+on:
+  workflow_dispatch:
+    inputs:
+      rounds:
+        description: Short perf-accounting rounds
+        required: false
+        default: "3"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  nginx-path-perf:
+    name: x64 nginx and reader instruction accounting
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      CLANG: clang-15
+      LD_LIBRARY_PATH: /usr/lib/llvm-15/lib
+    defaults:
+      run:
+        working-directory: bpftime
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/official-no-btf
+          submodules: "recursive"
+          path: bpftime
+
+      - name: install build and perf dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt update
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 17
+          sudo apt update
+          sudo apt install -y --no-install-recommends \
+            autoconf \
+            automake \
+            binutils-dev \
+            build-essential \
+            ca-certificates \
+            clang \
+            clang-15 \
+            cmake \
+            curl \
+            git \
+            libboost-all-dev \
+            libelf-dev \
+            libncurses-dev \
+            libssl-dev \
+            libtool \
+            libyaml-cpp-dev \
+            linux-tools-common \
+            linux-tools-generic \
+            llvm \
+            llvm-15 \
+            llvm-15-dev \
+            llvm-dev \
+            nginx \
+            pkg-config \
+            python-is-python3 \
+            python3 \
+            systemtap-sdt-dev \
+            wrk \
+            zlib1g-dev
+          sudo apt install -y --no-install-recommends "linux-tools-$(uname -r)" || true
+
+      - name: configure perf access and verify hardware counters
+        run: |
+          set -euxo pipefail
+          sudo sysctl -w kernel.perf_event_paranoid=-1 || true
+          sudo sysctl -w kernel.kptr_restrict=0 || true
+
+          PERF_BIN="$(find /usr/lib/linux-tools -type f -name perf -executable 2>/dev/null | sort -V | tail -n 1)"
+          if [[ -z "$PERF_BIN" ]]; then
+            PERF_BIN="$(command -v perf)"
+          fi
+          sudo "$PERF_BIN" --version
+          echo "$PERF_BIN" > "$RUNNER_TEMP/perf-bin"
+
+          sudo "$PERF_BIN" stat -x, \
+            -e task-clock,cycles:u,instructions:u,cycles:k,instructions:k \
+            -- sleep 1 2> "$RUNNER_TEMP/perf-preflight.csv"
+          cat "$RUNNER_TEMP/perf-preflight.csv"
+          if grep -Eq '<not supported>|<not counted>' "$RUNNER_TEMP/perf-preflight.csv"; then
+            echo "Required x64 hardware counters are unavailable on this runner" >&2
+            exit 1
+          fi
+
+      - name: show runner information
+        run: |
+          uname -a
+          uname -m
+          lscpu
+          nginx -v
+          openssl version
+          wrk -v || true
+          llvm-config-15 --version
+          clang-15 --version
+          git rev-parse HEAD
+          git status --short
+
+      - name: build official no-btf ssl-nginx artifacts
+        run: |
+          set -euxo pipefail
+          LLVM_DIR="$(llvm-config-15 --cmakedir)"
+          cmake -Bbuild \
+            -DLLVM_DIR="$LLVM_DIR" \
+            -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo \
+            -DBPFTIME_LLVM_JIT=1 \
+            -DBPFTIME_ENABLE_LTO=1 \
+            -DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO \
+            -DENABLE_PROBE_WRITE_CHECK=0 \
+            -DENABLE_PROBE_READ_CHECK=0 \
+            -DBUILD_ATTACH_IMPL_EXAMPLE=1
+          cmake --build build --config RelWithDebInfo --target install -j"$(nproc)"
+          make -C benchmark/ssl-nginx
+
+          mkdir -p example/sslsniff
+          ln -sf ../tracing/sslsniff/sslsniff example/sslsniff/sslsniff
+          test -x example/sslsniff/sslsniff
+
+      - name: run 16-byte nginx-path perf accounting
+        run: |
+          set -euxo pipefail
+          OUT=benchmark-results-official-no-btf-nginx-path-perf-x64
+          PERF_BIN="$(cat "$RUNNER_TEMP/perf-bin")"
+          mkdir -p "$OUT"
+          PERF="$PERF_BIN" python3 benchmark/ssl-nginx/nginx_path_perf.py \
+            --output "$OUT" \
+            --rounds "${{ inputs.rounds }}" \
+            --payload-bytes 16 \
+            --wrk-seconds 8 \
+            --perf-seconds 5 \
+            --connections 100 \
+            2>&1 | tee "$OUT/run.log"
+          cat "$OUT/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: collect diagnostic outputs
+        if: always()
+        run: |
+          set +e
+          OUT=benchmark-results-official-no-btf-nginx-path-perf-x64
+          mkdir -p "$OUT"
+          cp "$RUNNER_TEMP/perf-preflight.csv" "$OUT/perf-preflight.csv" 2>/dev/null || true
+          {
+            echo "date: $(date -Is)"
+            echo "uname: $(uname -a)"
+            echo "arch: $(uname -m)"
+            echo "nproc: $(nproc)"
+            echo "perf: $(cat "$RUNNER_TEMP/perf-bin" 2>/dev/null)"
+            echo
+            lscpu 2>/dev/null || true
+          } > "$OUT/system-info.txt"
+          {
+            git rev-parse HEAD
+            git status --short
+          } > "$OUT/git-info.txt" 2>&1
+          sudo build/tools/bpftimetool/bpftimetool remove >/dev/null 2>&1 || true
+          sudo pkill -KILL -x nginx >/dev/null 2>&1 || true
+          sudo pkill -KILL -x sslsniff >/dev/null 2>&1 || true
+          sudo chown -R "$(id -u):$(id -g)" "$OUT" 2>/dev/null || true
+          tar -czf benchmark-results-official-no-btf-nginx-path-perf-x64.tar.gz "$OUT"
+
+      - name: upload nginx-path perf results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: official-no-btf-nginx-path-perf-x64-results
+          path: bpftime/benchmark-results-official-no-btf-nginx-path-perf-x64.tar.gz
+          if-no-files-found: error

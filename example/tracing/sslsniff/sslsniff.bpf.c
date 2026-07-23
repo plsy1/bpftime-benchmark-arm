@@ -122,8 +122,8 @@ static __always_inline int SSL_exit(struct pt_regs *ctx, int rw) {
     else
         buf_copy_size = 0;
 
-    bpf_perf_event_output(ctx, &perf_SSL_events, BPF_F_CURRENT_CPU, data,
-                            EVENT_SIZE(buf_copy_size));
+    // bpf_perf_event_output(ctx, &perf_SSL_events, BPF_F_CURRENT_CPU, data,
+    //                         EVENT_SIZE(buf_copy_size));
     return 0;
 }
 
@@ -183,8 +183,8 @@ int BPF_URETPROBE(probe_SSL_do_handshake_exit) {
     bpf_get_current_comm(&data->comm, sizeof(data->comm));
     bpf_map_delete_elem(&start_ns, &tid);
 
-    bpf_perf_event_output(ctx, &perf_SSL_events, BPF_F_CURRENT_CPU, data,
-                            EVENT_SIZE(0));
+    // bpf_perf_event_output(ctx, &perf_SSL_events, BPF_F_CURRENT_CPU, data,
+    //                         EVENT_SIZE(0));
     return 0;
 }
 

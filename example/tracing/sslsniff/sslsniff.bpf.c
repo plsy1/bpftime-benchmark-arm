@@ -59,15 +59,15 @@ struct {
 
 SEC("uprobe/do_handshake")
 int BPF_UPROBE(probe_SSL_rw_enter, void *ssl, void *buf, int num) {
-    // u64 pid_tgid = bpf_get_current_pid_tgid();
-    // u32 pid = pid_tgid >> 32;
-    // u32 tid = pid_tgid;
-    // u32 uid = bpf_get_current_uid_gid();
-    // u64 ts = bpf_ktime_get_ns();
+    u64 pid_tgid = bpf_get_current_pid_tgid();
+    u32 pid = pid_tgid >> 32;
+    u32 tid = pid_tgid;
+    u32 uid = bpf_get_current_uid_gid();
+    u64 ts = bpf_ktime_get_ns();
 
-    // /* store arg info for later lookup */
-    // bpf_map_update_elem(&bufs, &tid, &buf, BPF_ANY);
-    // bpf_map_update_elem(&start_ns, &tid, &ts, BPF_ANY);
+    /* store arg info for later lookup */
+    bpf_map_update_elem(&bufs, &tid, &buf, BPF_ANY);
+    bpf_map_update_elem(&start_ns, &tid, &ts, BPF_ANY);
     return 0;
 }
 
@@ -111,8 +111,8 @@ static __always_inline int SSL_exit(struct pt_regs *ctx, int rw) {
 
     bpf_get_current_comm(&data->comm, sizeof(data->comm));
 
-    if (bufp != 0)
-        ret = bpf_probe_read_user(&data->buf, buf_copy_size, (char *)*bufp);
+    // if (bufp != 0)
+    //     ret = bpf_probe_read_user(&data->buf, buf_copy_size, (char *)*bufp);
 
     bpf_map_delete_elem(&bufs, &tid);
     bpf_map_delete_elem(&start_ns, &tid);
@@ -129,14 +129,12 @@ static __always_inline int SSL_exit(struct pt_regs *ctx, int rw) {
 
 SEC("uretprobe/SSL_read")
 int BPF_URETPROBE(probe_SSL_read_exit) {
-    // return (SSL_exit(ctx, 0));
-    return 0;
+    return (SSL_exit(ctx, 0));
 }
 
 SEC("uretprobe/SSL_write")
 int BPF_URETPROBE(probe_SSL_write_exit) {
-    // return (SSL_exit(ctx, 1));
-    return 0;
+    return (SSL_exit(ctx, 1));
 }
 
 SEC("uprobe/do_handshake")
